@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 type Status = "pending" | "processing" | "sent" | "failed";
 type View = "scheduled" | "sent";
@@ -41,6 +42,26 @@ interface ComposeForm {
   startTime: string;
   delaySeconds: number;
   hourlyLimit: number;
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void;
+          renderButton: (element: HTMLElement, options: Record<string, string>) => void;
+        };
+      };
+    };
+  }
 }
 
 const sampleScheduled: EmailRecord[] = [
@@ -78,6 +99,10 @@ function StatusBadge({ status }: { status: Status }) {
 }
 
 export function App() {
+  const [authUser, setAuthUser] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem("reachinbox-user");
+    return saved ? JSON.parse(saved) as UserProfile : null;
+  });
   const [view, setView] = useState<View>("scheduled");
   const [scheduled, setScheduled] = useState<EmailRecord[]>(sampleScheduled);
   const [sent, setSent] = useState<EmailRecord[]>(sampleSent);
@@ -95,6 +120,7 @@ export function App() {
   const queueCount = scheduled.filter((email) => email.status === "pending").length;
   const deliveredCount = sent.filter((email) => email.status === "sent").length;
   const activeLabel = view === "scheduled" ? "scheduled" : "sent";
+  const displayUser: UserProfile = authUser ?? { id: "preview", name: "Kushal Shah", email: "kushal@example.com" };
 
   async function loadEmails() {
     setLoading(true);
@@ -145,7 +171,7 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE}/api/batches`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
+            headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID(), ...(authUser ? { "X-User-Id": authUser.id } : {}) },
         body: JSON.stringify({
           subject: form.subject,
           body: form.body,
@@ -187,7 +213,7 @@ export function App() {
       </aside>
 
       <main className="main-content">
-        <header className="topbar"><button className="mobile-menu" aria-label="Open menu"><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span>/</span><strong>Overview</strong></div><div className="topbar-actions"><button className="icon-button" aria-label="Open notifications"><Mail size={18} /></button><div className="user-menu"><div className="user-avatar">KS</div><div className="user-copy"><strong>Kushal Shah</strong><span>kushal@example.com</span></div><ChevronDown size={15} /></div></div></header>
+        <header className="topbar"><button className="mobile-menu" aria-label="Open menu"><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span>/</span><strong>Overview</strong></div><div className="topbar-actions"><button className="icon-button" aria-label="Open notifications"><Mail size={18} /></button>{GOOGLE_CLIENT_ID && !authUser ? <GoogleAuthButton onUser={(user) => { setAuthUser(user); setError(""); }} onError={setError} /> : <div className="user-menu"><div className="user-avatar">{displayUser.avatarUrl ? <img src={displayUser.avatarUrl} alt="" /> : initials(displayUser.name)}</div><div className="user-copy"><strong>{displayUser.name}</strong><span>{displayUser.email}</span></div>{authUser ? <button className="icon-button" aria-label="Log out" onClick={() => { localStorage.removeItem("reachinbox-user"); setAuthUser(null); }}><LogOut size={15} /></button> : <ChevronDown size={15} />}</div>}</div></header>
         <div className="content-wrap">
           <section className="page-heading"><div><p className="eyebrow">Wednesday, August 20, 2026</p><h1>Good morning, Kushal <span>✦</span></h1><p className="heading-subtitle">Here’s the pulse of your outbound engine.</p></div><button className="primary-button" onClick={() => { setError(""); setComposeOpen(true); }}><Plus size={18} />Compose new email</button></section>
           {error && <div className="notice notice-error"><span>{error}</span><button onClick={() => setError("")} aria-label="Dismiss error"><X size={16} /></button></div>}
@@ -200,6 +226,43 @@ export function App() {
       {composeOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setComposeOpen(false); }}><section className="compose-drawer" role="dialog" aria-modal="true" aria-labelledby="compose-title"><div className="drawer-header"><div><p className="eyebrow">New campaign</p><h2 id="compose-title">Compose email</h2></div><button className="icon-button" onClick={() => setComposeOpen(false)} aria-label="Close compose"><X size={19} /></button></div><form onSubmit={scheduleBatch}><label>Subject<input value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })} placeholder="A thoughtful note for your next lead" /></label><label>Message<textarea value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} placeholder="Write something worth opening..." rows={5} /></label><div className="field-row"><label>Start time<input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label><label>Delay (seconds)<input type="number" min={0} value={form.delaySeconds} onChange={(event) => setForm({ ...form, delaySeconds: Number(event.target.value) })} /></label></div><div className="field-row"><label>Hourly limit<input type="number" min={1} value={form.hourlyLimit} onChange={(event) => setForm({ ...form, hourlyLimit: Number(event.target.value) })} /></label><div className="field-spacer" /></div><div className="upload-zone" onClick={() => fileRef.current?.click()} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter") fileRef.current?.click(); }}><input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} /><span className="upload-icon"><Upload size={18} /></span><div><strong>{fileName || "Upload your lead list"}</strong><small>{fileName ? recipientSummary : "CSV or TXT · email addresses are detected automatically"}</small></div><FileText size={18} className="upload-file" /></div><div className="recipient-count"><span><Users size={15} />{recipientSummary}</span>{recipients.length > 0 && <button type="button" onClick={() => { setRecipients([]); setFileName(""); }}>Clear</button>}</div><div className="drawer-footer"><button type="button" className="secondary-button" onClick={() => setComposeOpen(false)}>Cancel</button><button className="primary-button" disabled={saving}>{saving ? <LoaderCircle className="spin" size={17} /> : <Send size={17} />}{saving ? "Scheduling..." : "Schedule emails"}</button></div></form></section></div>}
     </div>
   );
+}
+
+function GoogleAuthButton({ onUser, onError }: { onUser: (user: UserProfile) => void; onError: (message: string) => void }) {
+  const buttonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !buttonRef.current) return;
+    const render = () => {
+      if (!window.google || !buttonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async ({ credential }) => {
+          try {
+            const response = await fetch(`${API_BASE}/api/auth/google`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ credential }) });
+            if (!response.ok) throw new Error("Google sign-in failed");
+            const data = await response.json() as { user: UserProfile };
+            localStorage.setItem("reachinbox-user", JSON.stringify(data.user));
+            onUser(data.user);
+          } catch {
+            onError("Google sign-in could not be completed.");
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(buttonRef.current, { theme: "outline", size: "medium", text: "signin_with", shape: "rectangular" });
+    };
+    const existing = document.getElementById("google-identity-script");
+    if (existing) { render(); return; }
+    const script = document.createElement("script");
+    script.id = "google-identity-script";
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = render;
+    document.head.appendChild(script);
+  }, [onError, onUser]);
+
+  return <div ref={buttonRef} className="google-button" />;
 }
 
 function Metric({ icon, label, value, detail, tone }: { icon: React.ReactNode; label: string; value: string; detail: string; tone: string }) {

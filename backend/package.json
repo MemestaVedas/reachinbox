@@ -15,6 +15,7 @@
     "bullmq": "^5.56.2",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "google-auth-library": "^11.0.2",
     "ioredis": "^5.7.0",
     "nodemailer": "^7.0.5"
   },
