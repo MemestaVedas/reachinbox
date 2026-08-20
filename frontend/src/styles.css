@@ -2,7 +2,7 @@
 
 :root { font-family: 'DM Sans', sans-serif; color: #20241f; background: #f4f5ef; font-synthesis: none; text-rendering: optimizeLegibility; --ink: #20241f; --muted: #7d837a; --line: #e2e5dd; --paper: #fbfcf8; --lime: #d6f35b; --blue: #c9e5ef; --orange: #f5d9ba; --purple: #dbd4ee; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: #f4f5ef; }
+body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; background: #f4f5ef; }
 button, input, textarea { font: inherit; }
 button { border: 0; cursor: pointer; }
 button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(104, 130, 29, .35); outline-offset: 2px; }
