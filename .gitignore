@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build and coverage output
+dist/
+build/
+coverage/
+.next/
+.vite/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Prisma local files
+prisma/*.db
+prisma/*.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local tooling
+.DS_Store
+.vscode/settings.json
