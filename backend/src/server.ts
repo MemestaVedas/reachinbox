@@ -79,6 +79,21 @@ async function senderForUser(userId?: string) {
   });
 }
 
+async function reconcilePendingJobs(): Promise<void> {
+  const pending = await prisma.scheduledEmail.findMany({
+    where: { status: "pending" },
+    select: { id: true, scheduledFor: true },
+  });
+
+  for (const email of pending) {
+    if (await emailQueue.getJob(email.id)) continue;
+    await emailQueue.add("send-email", { scheduledEmailId: email.id }, {
+      jobId: email.id,
+      delay: Math.max(0, email.scheduledFor.getTime() - Date.now()),
+    });
+  }
+}
+
 async function authenticatedUser(request: express.Request, response: express.Response) {
   const authorization = request.header("Authorization");
   const audience = process.env.GOOGLE_CLIENT_ID;
@@ -259,4 +274,8 @@ app.get("/health", (_request, response) => {
 
 app.listen(port, () => {
   console.log(`API listening on port ${port}`);
+  void reconcilePendingJobs();
 });
+
+const recoveryTimer = setInterval(() => void reconcilePendingJobs(), 30_000);
+recoveryTimer.unref();

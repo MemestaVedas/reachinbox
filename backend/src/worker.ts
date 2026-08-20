@@ -6,7 +6,6 @@ import { redis } from "./lib/redis.js";
 import { emailQueue, EMAIL_QUEUE_NAME, type SendEmailJobData } from "./queue.js";
 
 const concurrency = Number(process.env.WORKER_CONCURRENCY ?? 5);
-const hourlyLimit = Number(process.env.MAX_EMAILS_PER_HOUR_PER_SENDER ?? 200);
 const minimumDelayMs = Number(process.env.MIN_DELAY_MS ?? 2_000);
 
 function hourWindow(date: Date): string {
@@ -20,7 +19,7 @@ function nextHourDelayMs(date: Date): number {
 	return Math.max(1_000, nextHour.getTime() - Date.now());
 }
 
-async function reserveHourlySlot(senderId: string): Promise<boolean> {
+async function reserveHourlySlot(senderId: string, limit: number): Promise<boolean> {
 	const key = `ratelimit:${senderId}:${hourWindow(new Date())}`;
 	const count = await redis.incr(key);
 
@@ -28,7 +27,7 @@ async function reserveHourlySlot(senderId: string): Promise<boolean> {
 		await redis.expire(key, 3_700);
 	}
 
-	if (count <= hourlyLimit) {
+	if (count <= limit) {
 		return true;
 	}
 
@@ -46,18 +45,19 @@ async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 		return;
 	}
 
-	if (!(await reserveHourlySlot(email.senderId))) {
-		await worker.rateLimit(nextHourDelayMs(new Date()));
-		throw Worker.RateLimitError();
-	}
-
 	const claim = await prisma.scheduledEmail.updateMany({
-		where: { id: email.id, status: { in: ["pending", "processing"] } },
+			where: { id: email.id, status: "pending" },
 		data: { status: "processing", attempts: { increment: 1 } },
 	});
 
 	if (claim.count === 0) {
 		return;
+	}
+
+	if (!(await reserveHourlySlot(email.senderId, email.batch.hourlyLimit))) {
+		await prisma.scheduledEmail.update({ where: { id: email.id }, data: { status: "pending" } });
+		await worker.rateLimit(nextHourDelayMs(new Date()));
+		throw Worker.RateLimitError();
 	}
 
 	try {
@@ -100,6 +100,7 @@ async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 }
 
 async function reconcileJobs(): Promise<void> {
+	await prisma.scheduledEmail.updateMany({ where: { status: "processing" }, data: { status: "pending" } });
 	const orphanedEmails = await prisma.scheduledEmail.findMany({
 		where: { status: { in: ["pending", "processing"] } },
 		select: { id: true, scheduledFor: true },
