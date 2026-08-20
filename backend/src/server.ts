@@ -261,7 +261,7 @@ app.get("/api/emails", async (request, response) => {
 
   const emails = await prisma.scheduledEmail.findMany({
     where: { ...filter, batch: { userId: user.id } },
-    include: { batch: true },
+    include: { batch: true, sender: { select: { etherealEmail: true } } },
     orderBy: { scheduledFor: "asc" },
   });
 
