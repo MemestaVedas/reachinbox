@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String      @id @default(cuid())
+  googleId  String      @unique
+  name      String
+  email     String      @unique
+  avatarUrl String?
+  senders   Sender[]
+  batches   EmailBatch[]
+  createdAt DateTime    @default(now())
+}
+
+model Sender {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  etherealEmail String
+  etherealPass  String
+  etherealHost  String
+  etherealPort  Int
+  emails        ScheduledEmail[]
+}
+
+model EmailBatch {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id])
+  idempotencyKey  String?         @unique
+  subject         String
+  body            String          @db.Text
+  delayMs         Int
+  hourlyLimit     Int
+  startTime       DateTime
+  totalRecipients Int
+  createdAt       DateTime        @default(now())
+  emails          ScheduledEmail[]
+}
+
+model ScheduledEmail {
+  id           String   @id @default(cuid())
+  batchId      String
+  batch        EmailBatch @relation(fields: [batchId], references: [id])
+  senderId     String
+  sender       Sender   @relation(fields: [senderId], references: [id])
+  recipient    String
+  scheduledFor DateTime
+  status       Status   @default(pending)
+  attempts     Int      @default(0)
+  errorMessage String?
+  sentAt       DateTime?
+  jobId        String   @unique
+
+  @@index([status, scheduledFor])
+}
+
+enum Status {
+  pending
+  processing
+  sent
+  failed
+}
