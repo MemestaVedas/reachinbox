@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import { prisma } from "./lib/db.js";
@@ -13,7 +13,7 @@ const googleClient = new OAuth2Client();
 app.use(express.json({ limit: "2mb" }));
 app.use((request, response, next) => {
   response.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL ?? "http://localhost:5173");
-  response.header("Access-Control-Allow-Headers", "Content-Type, Idempotency-Key");
+  response.header("Access-Control-Allow-Headers", "Content-Type, Idempotency-Key, Authorization");
   response.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 
   if (request.method === "OPTIONS") {
@@ -79,6 +79,31 @@ async function senderForUser(userId?: string) {
   });
 }
 
+async function authenticatedUser(request: express.Request, response: express.Response) {
+  const authorization = request.header("Authorization");
+  const audience = process.env.GOOGLE_CLIENT_ID;
+
+  if (!audience || !authorization?.startsWith("Bearer ")) {
+    response.status(401).json({ error: "Google authentication is required" });
+    return null;
+  }
+
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: authorization.slice(7), audience });
+    const payload = ticket.getPayload();
+    if (!payload?.sub || !payload.email || !payload.name) throw new Error("Incomplete Google profile");
+
+    return prisma.user.upsert({
+      where: { googleId: payload.sub },
+      update: { name: payload.name, email: payload.email, avatarUrl: payload.picture },
+      create: { googleId: payload.sub, name: payload.name, email: payload.email, avatarUrl: payload.picture },
+    });
+  } catch {
+    response.status(401).json({ error: "Google authentication could not be verified" });
+    return null;
+  }
+}
+
 app.post("/api/auth/google", async (request, response) => {
   const credential = request.body?.credential;
   const audience = process.env.GOOGLE_CLIENT_ID;
@@ -116,12 +141,26 @@ app.post("/api/auth/google", async (request, response) => {
 
 app.post("/api/batches", async (request, response) => {
   try {
+    const user = await authenticatedUser(request, response);
+    if (!user) return;
     const body = request.body as CreateBatchBody;
     const idempotencyKey = request.header("Idempotency-Key");
+    const fingerprint = createHash("sha256").update(JSON.stringify({
+      subject: body.subject?.trim(),
+      body: body.body?.trim(),
+      recipients: normalizedRecipients(body.recipients),
+      startTime: body.startTime,
+      delayMs: body.delayMs ?? 2_000,
+      hourlyLimit: body.hourlyLimit ?? 200,
+    })).digest("hex");
 
     if (idempotencyKey) {
       const existing = await prisma.emailBatch.findUnique({ where: { idempotencyKey } });
       if (existing) {
+        if (existing.userId !== user.id || existing.requestFingerprint !== fingerprint) {
+          response.status(409).json({ error: "Idempotency-Key was already used for another request" });
+          return;
+        }
         response.status(200).json({ batch: existing, reused: true });
         return;
       }
@@ -137,7 +176,7 @@ app.post("/api/batches", async (request, response) => {
       return;
     }
 
-    const sender = await senderForUser(request.header("X-User-Id") ?? undefined);
+    const sender = await senderForUser(user.id);
     const scheduledRecipients = scheduleRecipients(recipients, startTime, delayMs, hourlyLimit);
     const batchId = randomUUID();
     const rows = scheduledRecipients.map(({ recipient, scheduledFor }) => ({
@@ -159,6 +198,7 @@ app.post("/api/batches", async (request, response) => {
           id: batchId,
           userId: sender.userId,
           idempotencyKey,
+          requestFingerprint: fingerprint,
           subject: body.subject!.trim(),
           body: body.body!.trim(),
           delayMs,
@@ -196,6 +236,8 @@ app.post("/api/batches", async (request, response) => {
 });
 
 app.get("/api/emails", async (request, response) => {
+  const user = await authenticatedUser(request, response);
+  if (!user) return;
   const status = request.query.status;
   const allowedStatuses = ["pending", "processing", "sent", "failed"] as const;
   const filter = allowedStatuses.includes(status as (typeof allowedStatuses)[number])
@@ -203,7 +245,7 @@ app.get("/api/emails", async (request, response) => {
     : {};
 
   const emails = await prisma.scheduledEmail.findMany({
-    where: filter,
+    where: { ...filter, batch: { userId: user.id } },
     include: { batch: true },
     orderBy: { scheduledFor: "asc" },
   });
