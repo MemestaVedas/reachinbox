@@ -27,3 +27,6 @@ pnpm-debug.log*
 # Local tooling
 .DS_Store
 .vscode/settings.json
+
+# Self references
+public/
