@@ -139,7 +139,7 @@ export function App() {
     const emails = text.match(/[^\s,;]+@[^\s,;]+\.[^\s,;]+/gi) ?? [];
     setRecipients((current) => [...new Set([...current, ...emails.map((email) => email.toLowerCase())])]);
     setFileName(file.name);
-    showToast(`Detected ${new Set(emails.map((email) => email.toLowerCase())).size} mails from ${file.name}`);
+    showToast(`Detected ${new Set(emails.map((email) => email.toLowerCase())).size} email IDs from ${file.name}`);
     event.target.value = "";
   }
 
