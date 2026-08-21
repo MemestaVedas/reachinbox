@@ -388,6 +388,8 @@ export function App() {
         sentCount={sent.length}
         setFolder={(next) => {
           setFolder(next);
+          setStatusFilter("all");
+          setDateFilter("all");
           setMessage("");
         }}
         onCompose={() => {
@@ -439,7 +441,6 @@ export function App() {
 
           <div className="list-heading">
             <div>
-              <span className="overline">Core</span>
               <h1>
                 {folder === "scheduled" ? "Scheduled" : "Sent"}{" "}
                 <small>{visibleEmails.length}</small>
