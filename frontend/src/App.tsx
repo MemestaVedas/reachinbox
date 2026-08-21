@@ -236,7 +236,7 @@ export function App() {
 
   function removeRecipient(recipient: string) {
     setRecipients((current) => current.filter((value) => value !== recipient));
-    showToast("🗑️ Deleted", `Deleted ${recipient}`, "warning");
+    showToast("Deleted", `Deleted ${recipient}`, "warning");
   }
 
   async function scheduleEmail(event: FormEvent) {
