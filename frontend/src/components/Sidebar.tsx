@@ -30,11 +30,7 @@ export function Sidebar({
         onClick={() => setFolder("scheduled")}
       >
         <Clock3 size={15} />
-        Scheduled <b>{scheduledCount}</b>
-      </button>
-      <button type="button" className="sidebar-theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme}>
-        {darkMode ? <Sun size={15} /> : <Moon size={15} />}
-        <span>{darkMode ? "Light mode" : "Dark mode"}</span>
+        Scheduled <b aria-label={`${scheduledCount} scheduled emails`}>{scheduledCount}</b>
       </button>
 
       <button
@@ -42,7 +38,12 @@ export function Sidebar({
         onClick={() => setFolder("sent")}
       >
         <Send size={15} />
-        Sent <b>{sentCount}</b>
+        Sent <b aria-label={`${sentCount} sent emails`}>{sentCount}</b>
+      </button>
+
+      <button type="button" className="sidebar-theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme}>
+        {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+        <span>{darkMode ? "Light mode" : "Dark mode"}</span>
       </button>
     </aside>
   );
