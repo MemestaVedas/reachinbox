@@ -102,15 +102,27 @@ export function App() {
         fetch(`${API_BASE}/api/emails?status=sent,failed`, { headers }),
         fetch(`${API_BASE}/api/senders`, { headers }),
       ]);
-      if (!scheduledRes.ok || !sentRes.ok || !sendersRes.ok) throw new Error("API unavailable");
+      const responses = [scheduledRes, sentRes, sendersRes];
+      if (responses.some((response) => response.status === 401)) {
+        clearGoogleSession();
+        setAuthToken("");
+        setScreen("login");
+        setError("Your Google session has expired. Please sign in again.");
+        return;
+      }
+      const failedResponse = responses.find((response) => !response.ok);
+      if (failedResponse) throw new Error(`Dashboard request failed (${failedResponse.status})`);
       setScheduled((await scheduledRes.json() as { emails: EmailRecord[] }).emails);
       setSent((await sentRes.json() as { emails: EmailRecord[] }).emails);
       const loadedSenders = (await sendersRes.json() as { senders: SenderOption[] }).senders;
       setSenders(loadedSenders);
       setSenderId((current) => current || loadedSenders[0]?.id || "");
       setError("");
-    } catch {
-      setError("Preview data is shown while the API is offline.");
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : "";
+      setError(message.startsWith("Dashboard request failed")
+        ? "The dashboard could not load your mailbox data. Please try refreshing."
+        : "The API could not be reached. Check that the backend server is running.");
     } finally {
       setLoading(false);
     }
