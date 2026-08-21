@@ -72,10 +72,10 @@ export function App() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [toast, setToast] = useState<{ id: number; title: string; message: string; kind: "success" | "error" | "warning" } | null>(null);
+  const [toast, setToast] = useState<{ id: number; title: string; message: string; kind: "success" | "error" | "warning"; actionLabel?: string; onAction?: () => void } | null>(null);
 
-  function showToast(title: string, nextMessage: string, kind: "success" | "error" | "warning" = "success") {
-    setToast({ id: Date.now(), title, message: nextMessage, kind });
+  function showToast(title: string, nextMessage: string, kind: "success" | "error" | "warning" = "success", actionLabel?: string, onAction?: () => void) {
+    setToast({ id: Date.now(), title, message: nextMessage, kind, actionLabel, onAction });
   }
 
   // -------------------------------------------------------------------------
@@ -239,16 +239,16 @@ export function App() {
     showToast("Deleted", `Deleted ${recipient}`, "warning");
   }
 
-  async function scheduleEmail(event: FormEvent) {
-    event.preventDefault();
+  async function scheduleEmail(event?: FormEvent, sendAnyway = false) {
+    event?.preventDefault();
     const plainBody = plainTextFromHtml(compose.body);
-    if (!compose.subject.trim() || !plainBody || recipients.length === 0 || !senderId) {
+    if ((!sendAnyway && (!compose.subject.trim() || !plainBody)) || recipients.length === 0 || !senderId) {
       if (!compose.subject.trim() || !plainBody) {
-        showToast("⚠️ Missing details", !compose.subject.trim() && !plainBody
+        showToast("Missing details", !compose.subject.trim() && !plainBody
           ? "Add a subject and message before sending."
           : !compose.subject.trim()
             ? "Add a subject before sending."
-            : "Add a message before sending.", "warning");
+            : "Add a message before sending.", "warning", "Send anyway", () => { void scheduleEmail(undefined, true); });
       }
       setError("Add a sender, subject, message, and at least one recipient first.");
       return;
@@ -267,6 +267,7 @@ export function App() {
           subject: compose.subject,
           body: plainBody,
           bodyHtml: compose.body,
+          allowIncomplete: sendAnyway,
           recipients,
           attachmentIds: attachments.map((attachment) => attachment.id),
           senderId,
@@ -332,7 +333,7 @@ export function App() {
           showSendLater={showSendLater}
           setShowSendLater={setShowSendLater}
         />
-        {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} onClose={() => setToast(null)} /> : null}
+        {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} actionLabel={toast.actionLabel} onAction={toast.onAction} onClose={() => setToast(null)} /> : null}
       </>
     );
   }
@@ -355,7 +356,7 @@ export function App() {
 
   return (
     <div className="app">
-      {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} onClose={() => setToast(null)} /> : null}
+      {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} actionLabel={toast.actionLabel} onAction={toast.onAction} onClose={() => setToast(null)} /> : null}
       <Sidebar
         folder={folder}
         scheduledCount={scheduled.length}

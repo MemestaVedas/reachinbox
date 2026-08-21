@@ -5,11 +5,13 @@ interface ToastProps {
   title: string;
   message: string;
   kind?: "success" | "error" | "warning";
+  actionLabel?: string;
+  onAction?: () => void;
   onClose: () => void;
   duration?: number;
 }
 
-export function Toast({ title, message, kind = "success", onClose, duration = 4200 }: ToastProps) {
+export function Toast({ title, message, kind = "success", actionLabel, onAction, onClose, duration = 4200 }: ToastProps) {
   const [closing, setClosing] = useState(false);
   const timerRef = useRef<number | null>(null);
 
@@ -49,6 +51,7 @@ export function Toast({ title, message, kind = "success", onClose, duration = 42
     >
       <span className="toast-icon">{kind === "error" ? <AlertCircle size={25} aria-hidden="true" /> : kind === "warning" ? <Trash2 size={25} aria-hidden="true" /> : <CheckCircle2 size={25} aria-hidden="true" />}</span>
       <span className="toast-copy"><strong>{title}</strong><span>{message}</span></span>
+      {actionLabel && onAction ? <button type="button" className="toast-action" onClick={() => { onAction(); onClose(); }}>{actionLabel}</button> : null}
       <button type="button" aria-label="Close notification" onClick={dismiss}><X size={16} /></button>
     </div>
   );

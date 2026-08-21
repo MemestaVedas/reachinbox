@@ -38,6 +38,7 @@ interface CreateBatchBody {
   hourlyLimit?: number;
   senderId?: string;
   attachmentIds?: unknown;
+  allowIncomplete?: boolean;
 }
 
 function safeFileName(value: string | undefined): string {
@@ -327,7 +328,7 @@ app.post("/api/batches", async (request, response) => {
     const idempotencyKey = request.header("Idempotency-Key");
     const uploadedAttachmentIds = attachmentIds(body.attachmentIds);
     const richText = sanitizeRichText(body.bodyHtml);
-    const plainText = richText ? textFromRichText(richText) : body.body?.trim();
+    const plainText = richText ? textFromRichText(richText) : (body.body?.trim() ?? "");
     const fingerprint = createHash("sha256").update(JSON.stringify({
       subject: body.subject?.trim(),
       body: plainText,
@@ -357,7 +358,7 @@ app.post("/api/batches", async (request, response) => {
     const delayMs = Number(body.delayMs ?? 2_000);
     const hourlyLimit = Number(body.hourlyLimit ?? 200);
 
-    if (!body.subject?.trim() || !plainText || recipients.length === 0 || Number.isNaN(startTime.getTime())) {
+    if ((!body.allowIncomplete && (!body.subject?.trim() || !plainText)) || recipients.length === 0 || Number.isNaN(startTime.getTime())) {
       response.status(400).json({ error: "subject, body, recipients, and a valid startTime are required" });
       return;
     }
@@ -402,7 +403,7 @@ app.post("/api/batches", async (request, response) => {
           userId: sender.userId,
           idempotencyKey,
           requestFingerprint: fingerprint,
-          subject: body.subject!.trim(),
+          subject: body.subject?.trim() ?? "",
           body: plainText,
           bodyHtml: richText,
           delayMs,
