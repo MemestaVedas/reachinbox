@@ -89,6 +89,48 @@ export function App() {
     setToast({ id: Date.now(), title, message: nextMessage, kind, actionLabel, onAction });
   }
 
+  function navigateTo(nextScreen: Screen, nextEmail: EmailRecord | null = null) {
+    if (nextScreen !== screen || nextEmail?.id !== selected?.id) {
+      window.history.pushState({ screen: nextScreen, selectedId: nextEmail?.id }, "");
+      setScreen(nextScreen);
+      setSelected(nextEmail);
+    }
+  }
+
+  function goBack() {
+    if (window.history.state && window.history.state.screen && window.history.state.screen !== "home") {
+      window.history.back();
+    } else {
+      setScreen("home");
+      setSelected(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!window.history.state) {
+      window.history.replaceState({ screen }, "");
+    }
+
+    function handlePopState(event: PopStateEvent) {
+      const state = event.state as { screen?: Screen; selectedId?: string } | null;
+      if (state && state.screen) {
+        setScreen(state.screen);
+        if (state.screen === "detail" && state.selectedId) {
+          const found = [...scheduled, ...sent].find((e) => e.id === state.selectedId);
+          if (found) setSelected(found);
+        } else {
+          setSelected(null);
+        }
+      } else {
+        setScreen(readStoredSession(USER_STORAGE_KEY) && readStoredSession(AUTH_TOKEN_STORAGE_KEY) ? "home" : "login");
+        setSelected(null);
+      }
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [scheduled, sent, screen]);
+
   // -------------------------------------------------------------------------
   // Data fetching
   // -------------------------------------------------------------------------
@@ -352,7 +394,7 @@ export function App() {
           uploadMedia={uploadMedia}
           removeAttachment={removeAttachment}
           uploading={uploading}
-          onBack={() => setScreen("home")}
+          onBack={goBack}
           onSubmit={scheduleEmail}
           saving={saving}
           showSendLater={showSendLater}
@@ -364,7 +406,7 @@ export function App() {
   }
 
   if (screen === "detail" && selected) {
-    return <DetailScreen email={selected} onBack={() => setScreen("home")} />;
+    return <DetailScreen email={selected} onBack={goBack} />;
   }
 
   // -------------------------------------------------------------------------
@@ -418,7 +460,7 @@ export function App() {
         }}
         onCompose={() => {
           setError("");
-          setScreen("compose");
+          navigateTo("compose");
         }}
         darkMode={darkMode}
         onToggleTheme={() => setDarkMode((current) => !current)}
@@ -488,7 +530,7 @@ export function App() {
               </label>
             </div>
 
-            <button className="compose-button" onClick={() => setScreen("compose")}>
+            <button className="compose-button" onClick={() => navigateTo("compose")}>
               Compose
             </button>
           </div>
@@ -504,10 +546,7 @@ export function App() {
                   key={email.id}
                   email={email}
                   folder={folder}
-                  onOpen={() => {
-                    setSelected(email);
-                    setScreen("detail");
-                  }}
+                  onOpen={() => navigateTo("detail", email)}
                 />
               ))
             )}
