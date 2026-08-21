@@ -59,3 +59,7 @@
 @keyframes toast-slide-out { from { opacity: 1; transform: translate3d(0, 0, 0); } to { opacity: 0; transform: translate3d(32px, -8px, 0); } }
 @media (prefers-reduced-motion: reduce) { .toast, .toast-closing { animation-duration: 1ms; } }
 @media (max-width: 700px) { .toast { top: 12px; right: 12px; left: 12px; max-width: none; } }
+.dashboard-filters { display: flex; max-width: 930px; align-items: center; justify-content: flex-end; gap: 8px; margin: -5px auto 14px; }
+.dashboard-filters label { display: inline-flex; align-items: center; gap: 5px; color: #89939a; font-size: 9px; }
+.dashboard-filters select { padding: 6px 22px 6px 8px; border: 1px solid #e5eaeb; border-radius: 5px; outline: 0; color: #58636c; background: #fff; font-size: 9px; cursor: pointer; }.dashboard-filters select:focus-visible { border-color: #42b979; }
+@media (max-width: 700px) { .dashboard-filters { align-items: stretch; flex-wrap: wrap; justify-content: flex-start; margin-top: -4px; }.dashboard-filters label { flex: 1 1 30%; flex-direction: column; align-items: stretch; }.dashboard-filters select { width: 100%; } }

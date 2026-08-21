@@ -67,6 +67,9 @@ export function App() {
   const [senders, setSenders] = useState<SenderOption[]>([]);
   const [senderId, setSenderId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortMode, setSortMode] = useState<"date-desc" | "date-asc" | "recipient" | "subject" | "status">("date-desc");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "processing" | "sent" | "failed">("all");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "next7">("all");
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -350,10 +353,31 @@ export function App() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredEmails = normalizedSearch
     ? emails.filter((email) =>
-      email.recipient.toLowerCase().includes(normalizedSearch)
-      || email.batch.subject.toLowerCase().includes(normalizedSearch),
-    )
+        email.recipient.toLowerCase().includes(normalizedSearch)
+        || email.batch.subject.toLowerCase().includes(normalizedSearch),
+      )
     : emails;
+  const now = Date.now();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = startOfToday.getTime() + 24 * 60 * 60 * 1000;
+  const visibleEmails = filteredEmails
+    .filter((email) => statusFilter === "all" || email.status === statusFilter)
+    .filter((email) => {
+      const timestamp = new Date(email.sentAt ?? email.scheduledFor).getTime();
+      if (dateFilter === "today") return timestamp >= startOfToday.getTime() && timestamp < endOfToday;
+      if (dateFilter === "next7") return timestamp >= now && timestamp <= now + 7 * 24 * 60 * 60 * 1000;
+      return true;
+    })
+    .slice()
+    .sort((left, right) => {
+      if (sortMode === "recipient") return left.recipient.localeCompare(right.recipient);
+      if (sortMode === "subject") return left.batch.subject.localeCompare(right.batch.subject);
+      if (sortMode === "status") return left.status.localeCompare(right.status);
+      const leftDate = new Date(left.sentAt ?? left.scheduledFor).getTime();
+      const rightDate = new Date(right.sentAt ?? right.scheduledFor).getTime();
+      return sortMode === "date-asc" ? leftDate - rightDate : rightDate - leftDate;
+    });
 
   return (
     <div className="app">
@@ -418,7 +442,7 @@ export function App() {
               <span className="overline">Core</span>
               <h1>
                 {folder === "scheduled" ? "Scheduled" : "Sent"}{" "}
-                <small>{emails.length}</small>
+                <small>{visibleEmails.length}</small>
               </h1>
             </div>
             <button className="compose-button" onClick={() => setScreen("compose")}>
@@ -426,13 +450,38 @@ export function App() {
             </button>
           </div>
 
+          <div className="dashboard-filters" aria-label="Email sorting and filters">
+            <label>Sort
+              <select value={sortMode} onChange={(event) => setSortMode(event.target.value as typeof sortMode)}>
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="recipient">Recipient A–Z</option>
+                <option value="subject">Subject A–Z</option>
+                <option value="status">Status</option>
+              </select>
+            </label>
+            <label>Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+                <option value="all">All statuses</option>
+                {folder === "scheduled" ? <><option value="pending">Pending</option><option value="processing">Processing</option></> : <><option value="sent">Sent</option><option value="failed">Failed</option></>}
+              </select>
+            </label>
+            <label>Date
+              <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}>
+                <option value="all">All dates</option>
+                <option value="today">Today</option>
+                <option value="next7">Next 7 days</option>
+              </select>
+            </label>
+          </div>
+
           <div className="email-list">
             {loading ? (
               <div className="empty-row">Loading emails...</div>
-            ) : filteredEmails.length === 0 ? (
+            ) : visibleEmails.length === 0 ? (
               <div className="empty-row">No {folder} emails yet.</div>
             ) : (
-              filteredEmails.map((email) => (
+              visibleEmails.map((email) => (
                 <EmailRow
                   key={email.id}
                   email={email}
