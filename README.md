@@ -212,3 +212,36 @@ dist/assets/index-BG-Q6RZK.js   207.24 kB
   - Tracks sending velocity per-sender using atomic increments (`INCR`/`EXPIRE`) on `ratelimit:<senderId>:<hour>` keys.
   - When the hourly cap is hit, jobs are delayed and rescheduled to the next UTC hour rather than dropped or failed.
 
+---
+
+## Viewing Logs & Troubleshooting
+
+Logs are generated across different processes and can be monitored as follows:
+
+### 1. Database & Redis Logs (Docker)
+To view output or troubleshoot connection/startup errors for your database or Redis cache:
+```powershell
+docker compose logs -f                 # Follow logs from both services
+docker compose logs -f postgres        # Follow PostgreSQL logs only
+docker compose logs -f redis           # Follow Redis logs only
+```
+
+### 2. Backend API Logs
+The Express API prints request routing, server startup details, and reconciliation logs directly to stdout:
+- If running under `npm run dev`, check the terminal running this command.
+- Production logs can be redirected to a file if necessary: `npm run dev > api.log`.
+
+### 3. Queue Worker Logs
+The BullMQ worker prints active state, job claim processes, Ethereal SMTP delivery receipts, and backoff retries:
+- Look at the console running `npm run worker`. You will see trace logs when jobs are processed:
+  ```text
+  [Worker] Claimed job row_uuid...
+  [Worker] Email successfully sent to recipient@example.com (MessageID: <...>)
+  ```
+
+### 4. Frontend Logs (Browser Console)
+- Open the dashboard at `http://localhost:5173`.
+- Press `F12` (or Right-Click -> Inspect) and select the **Console** tab.
+- This displays API connectivity errors, token validation callbacks, CSV/TXT address parsing feedback, and runtime warning indicators.
+
+
