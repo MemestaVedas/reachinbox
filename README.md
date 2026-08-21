@@ -46,7 +46,7 @@ reachinbox/
 In the project root, start the PostgreSQL and Redis containers:
 
 ```powershell
-docker compose up -d
+docker compose up -d  # Run every time to start databases
 ```
 
 ---
@@ -60,12 +60,12 @@ docker compose up -d
 
 2. Install dependencies:
    ```powershell
-   npm install
+   npm install  # One-time setup only
    ```
 
 3. Create the environment file:
    ```powershell
-   copy .env.example .env
+   copy .env.example .env  # One-time setup only
    ```
 
 4. **Update `.env`**:
@@ -76,18 +76,18 @@ docker compose up -d
 
 5. Generate the Prisma Client and migrate the database:
    ```powershell
-   npx prisma generate
-   npx prisma db push
+   npx prisma generate  # One-time setup (and after schema changes)
+   npx prisma db push   # One-time setup (and after schema changes)
    ```
 
 6. Start the API Server:
    ```powershell
-   npm run dev
+   npm run dev  # Run every time to start server
    ```
 
 7. Start the Queue Worker (in a separate terminal inside `backend/`):
    ```powershell
-   npm run worker
+   npm run worker  # Run every time to start worker
    ```
 
 ---
@@ -101,12 +101,12 @@ docker compose up -d
 
 2. Install dependencies:
    ```powershell
-   npm install
+   npm install  # One-time setup only
    ```
 
 3. Create the environment file:
    ```powershell
-   copy .env.example .env
+   copy .env.example .env  # One-time setup only
    ```
 
 4. **Update `.env`**:
@@ -116,7 +116,7 @@ docker compose up -d
 
 5. Start the development server:
    ```powershell
-   npm run dev
+   npm run dev  # Run every time to start dev dashboard
    ```
 
 6. Open your browser to `http://localhost:5173`.
@@ -130,15 +130,15 @@ To verify typescript safety, build correctness, and run the test suite:
 ### Backend Tests & Build
 ```powershell
 cd backend
-npm run build     # Compiles TypeScript
-npm test          # Runs integration tests (including 1000-recipient burst tests)
-npx prisma validate
+npm run build        # Compiles TypeScript (verification/production)
+npm test             # Runs integration tests (including 1000-recipient burst tests)
+npx prisma validate  # Checks schema validity
 ```
 
 ### Frontend Build
 ```powershell
 cd frontend
-npm run build     # Checks TypeScript compilation and runs Vite build
+npm run build        # Checks TypeScript compilation and runs Vite build
 ```
 
 ---
