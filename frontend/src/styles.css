@@ -79,3 +79,13 @@
 .header-section-title { font-size: 20px; }
 .header-section-title small, .side-link b { display: inline-grid; min-width: 22px; height: 18px; padding: 0 6px; place-items: center; border-radius: 9px; color: #69737b; background: #edf0f2; font-size: 9px; font-weight: 600; }
 .theme-dark .header-section-title small, .theme-dark .side-link b { color: #c9c4dc; background: #303049; }
+.sidebar-account { display:flex; align-items:center; gap:10px; margin:0 7px 22px; padding:10px 9px; border-radius:18px; background:#f4f7f5; }
+.sidebar-account > span:last-child { display:flex; min-width:0; flex-direction:column; gap:3px; }
+.sidebar-account strong, .sidebar-account small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sidebar-account strong { color:#202a31; font-size:12px; font-weight:600; }.sidebar-account small { color:#78848d; font-size:9px; }
+.sidebar-account .profile-avatar { width:34px; height:34px; flex:0 0 34px; font-size:9px; }
+.sidebar-logout-toggle { display:flex; align-items:center; gap:8px; width:36px; height:32px; margin-top:7px; padding:0 10px; overflow:hidden; border-radius:17px; color:#89949d; background:transparent; font-size:10px; white-space:nowrap; transition:width 180ms ease, color 180ms ease, background 180ms ease; }
+.sidebar-theme-toggle { width:36px; height:32px; margin-top:auto; padding:0 10px; overflow:hidden; border-radius:17px; white-space:nowrap; transition:width 180ms ease, color 180ms ease, background 180ms ease; }
+.sidebar-theme-toggle:hover, .sidebar-logout-toggle:hover { width:112px; color:#1b9f58; background:#eefaf3; }
+.sidebar-logout-toggle:hover { color:#b24e46; background:#fff0ed; }
+.theme-dark .sidebar-account { background:#1d1e2e; }.theme-dark .sidebar-account strong { color:#eeeafa; }.theme-dark .sidebar-account small { color:#9995ab; }.theme-dark .sidebar-logout-toggle:hover { color:#ffaca3; background:#38252c; }

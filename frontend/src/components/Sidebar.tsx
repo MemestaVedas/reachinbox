@@ -1,7 +1,8 @@
-import { Clock3, Moon, Send, Sun } from "lucide-react";
+import { Clock3, LogOut, Moon, Send, Sun } from "lucide-react";
 import type { Folder } from "../types";
 
 interface SidebarProps {
+  user: { name: string; email: string; avatarUrl?: string | null };
   folder: Folder;
   scheduledCount: number;
   sentCount: number;
@@ -9,18 +10,24 @@ interface SidebarProps {
   onCompose: () => void;
   darkMode: boolean;
   onToggleTheme: () => void;
+  onLogout: () => void;
 }
 
 export function Sidebar({
   folder,
+  user,
   scheduledCount,
   sentCount,
   setFolder,
-  onCompose, darkMode, onToggleTheme,
+  onCompose, darkMode, onToggleTheme, onLogout,
 }: SidebarProps) {
   return (
     <aside className="sidebar-light">
       <div className="logo">ONG</div>
+      <div className="sidebar-account">
+        <span className="profile-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}</span>
+        <span><strong>{user.name}</strong><small>{user.email}</small></span>
+      </div>
       <button className="outline-compose" onClick={onCompose}>
         Compose
       </button>
@@ -44,6 +51,10 @@ export function Sidebar({
       <button type="button" className="sidebar-theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme}>
         {darkMode ? <Sun size={15} /> : <Moon size={15} />}
         <span>{darkMode ? "Light mode" : "Dark mode"}</span>
+      </button>
+      <button type="button" className="sidebar-logout-toggle" aria-label="Log out" onClick={onLogout}>
+        <LogOut size={15} />
+        <span>Log out</span>
       </button>
     </aside>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, LogOut, Search, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Search, X } from "lucide-react";
 
 import type { ComposeForm, EmailRecord, Folder, Screen, SenderOption, UploadedAttachment, UserProfile } from "./types";
 import {
@@ -77,7 +77,6 @@ export function App() {
   const [sortMode, setSortMode] = useState<"date-desc" | "date-asc" | "recipient" | "subject" | "status">("date-desc");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "processing" | "sent" | "failed">("all");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "next7">("all");
-  const [profileOpen, setProfileOpen] = useState(false);
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -407,6 +406,7 @@ export function App() {
     <div className="app">
       {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} actionLabel={toast.actionLabel} onAction={toast.onAction} onClose={() => setToast(null)} /> : null}
       <Sidebar
+        user={user}
         folder={folder}
         scheduledCount={scheduled.length}
         sentCount={sent.length}
@@ -422,6 +422,7 @@ export function App() {
         }}
         darkMode={darkMode}
         onToggleTheme={() => setDarkMode((current) => !current)}
+        onLogout={logout}
       />
 
       <main className="workspace">
@@ -431,18 +432,6 @@ export function App() {
           <button className="header-icon" aria-label="Refresh" onClick={() => void loadEmails()}>
             ↻
           </button>
-          <div className="header-profile ml-auto">
-            <button className="profile-trigger" aria-label="Open account menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((current) => !current)}>
-              <span className="profile-avatar">
-                {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}
-              </span>
-            </button>
-            {profileOpen ? <div className="profile-menu" role="menu">
-              <div className="profile-menu-user"><span className="profile-avatar profile-menu-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.email}</small></span></div>
-              <div className="profile-menu-divider" />
-              <button className="profile-menu-action" role="menuitem" onClick={logout}><LogOut size={14} />Log out</button>
-            </div> : null}
-          </div>
         </header>
 
         <section className="inbox-content">
