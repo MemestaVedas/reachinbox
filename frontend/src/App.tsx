@@ -77,6 +77,7 @@ export function App() {
   const [sortMode, setSortMode] = useState<"date-desc" | "date-asc" | "recipient" | "subject" | "status">("date-desc");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "processing" | "sent" | "failed">("all");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "next7">("all");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -427,18 +428,18 @@ export function App() {
           <button className="theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setDarkMode((current) => !current)}>
             {darkMode ? <Sun size={15} /> : <Moon size={15} />}
           </button>
-          <div className="header-profile ml-auto flex items-center gap-2">
-            <span className="profile-avatar">
-              {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}
-            </span>
-            <span className="header-user-details">
-              <strong>{user.name}</strong>
-              <small>{user.email}</small>
-            </span>
-            <button className="header-logout" onClick={logout} aria-label="Log out">
-              <LogOut size={14} />
-              <span>Log out</span>
+          <div className="header-profile ml-auto">
+            <button className="profile-trigger" aria-label="Open account menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((current) => !current)}>
+              <span className="profile-avatar">
+                {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}
+              </span>
+              <span className="header-user-details"><strong>{user.name}</strong><small>{user.email}</small></span>
             </button>
+            {profileOpen ? <div className="profile-menu" role="menu">
+              <div className="profile-menu-user"><span className="profile-avatar profile-menu-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.email}</small></span></div>
+              <div className="profile-menu-divider" />
+              <button className="profile-menu-action" role="menuitem" onClick={logout}><LogOut size={14} />Log out</button>
+            </div> : null}
           </div>
         </header>
 
