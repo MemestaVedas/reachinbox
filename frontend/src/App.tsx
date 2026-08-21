@@ -243,6 +243,13 @@ export function App() {
     event.preventDefault();
     const plainBody = plainTextFromHtml(compose.body);
     if (!compose.subject.trim() || !plainBody || recipients.length === 0 || !senderId) {
+      if (!compose.subject.trim() || !plainBody) {
+        showToast("⚠️ Missing details", !compose.subject.trim() && !plainBody
+          ? "Add a subject and message before sending."
+          : !compose.subject.trim()
+            ? "Add a subject before sending."
+            : "Add a message before sending.", "warning");
+      }
       setError("Add a sender, subject, message, and at least one recipient first.");
       return;
     }
