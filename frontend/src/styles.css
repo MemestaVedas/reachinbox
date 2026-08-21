@@ -85,8 +85,57 @@
 .sidebar-account strong, .sidebar-account small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sidebar-account strong { color:#202a31; font-size:12px; font-weight:600; }.sidebar-account small { color:#78848d; font-size:9px; }
 .sidebar-account .profile-avatar { width:34px; height:34px; flex:0 0 34px; font-size:9px; }
-.sidebar-logout-toggle { display:flex; align-items:center; justify-content:flex-start; gap:8px; width:36px; height:32px; margin-top:7px; padding:0 10px; overflow:hidden; border-radius:17px; color:#89949d; background:transparent; font-size:10px; white-space:nowrap; transition:width 180ms ease, color 180ms ease, background 180ms ease; }
-.sidebar-theme-toggle { display:flex; align-items:center; justify-content:flex-start; width:36px; height:32px; margin-top:auto; padding:0 10px; overflow:hidden; border-radius:17px; white-space:nowrap; transition:width 180ms ease, color 180ms ease, background 180ms ease; }
-.sidebar-theme-toggle:hover, .sidebar-logout-toggle:hover { width:112px; color:#1b9f58; background:#eefaf3; }
-.sidebar-logout-toggle:hover { color:#b24e46; background:#fff0ed; }
-.theme-dark .sidebar-account { background:#1d1e2e; }.theme-dark .sidebar-account strong { color:#eeeafa; }.theme-dark .sidebar-account small { color:#9995ab; }.theme-dark .sidebar-logout-toggle:hover { color:#ffaca3; background:#38252c; }
+.sidebar-theme-toggle, .sidebar-logout-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 16px;
+  color: #89949d;
+  background: transparent;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1), background 180ms ease, color 180ms ease;
+}
+.sidebar-theme-toggle {
+  margin-top: auto;
+}
+.sidebar-logout-toggle {
+  margin-top: 6px;
+}
+.sidebar-theme-toggle svg, .sidebar-logout-toggle svg {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+}
+.sidebar-theme-toggle span, .sidebar-logout-toggle span {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+}
+.sidebar-theme-toggle:hover, .sidebar-logout-toggle:hover {
+  width: 110px;
+  color: #1b9f58;
+  background: #eefaf3;
+}
+.sidebar-logout-toggle:hover {
+  color: #b24e46;
+  background: #fff0ed;
+}
+.sidebar-theme-toggle:hover span, .sidebar-logout-toggle:hover span {
+  opacity: 1;
+  transform: translateX(0);
+}
+.theme-dark .sidebar-theme-toggle:hover {
+  color: #d0c0ff;
+  background: #282143;
+}
+.theme-dark .sidebar-logout-toggle:hover {
+  color: #ffaca3;
+  background: #38252c;
+}
