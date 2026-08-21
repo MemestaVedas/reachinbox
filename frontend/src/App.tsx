@@ -209,9 +209,10 @@ export function App() {
         });
         const payload = await response.json().catch(() => null) as { attachment?: UploadedAttachment; error?: string } | null;
         if (!response.ok || !payload?.attachment) throw new Error(payload?.error ?? `Unable to upload ${file.name}`);
-        return payload.attachment;
+        return { ...payload.attachment, previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined };
       }));
       setAttachments((current) => [...current, ...uploaded]);
+      showToast("Media uploaded", `${uploaded.length} file${uploaded.length === 1 ? "" : "s"} ready to attach`);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Unable to upload attachment.");
     } finally {
@@ -220,6 +221,7 @@ export function App() {
   }
 
   async function removeAttachment(attachment: UploadedAttachment) {
+    if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
     setAttachments((current) => current.filter((currentAttachment) => currentAttachment.id !== attachment.id));
     try {
       const response = await fetch(`${API_BASE}/api/uploads/${attachment.id}`, {
@@ -230,6 +232,10 @@ export function App() {
     } catch {
       setError(`Could not remove ${attachment.fileName} from storage. It will not be scheduled.`);
     }
+  }
+
+  function removeRecipient(recipient: string) {
+    setRecipients((current) => current.filter((value) => value !== recipient));
   }
 
   async function scheduleEmail(event: FormEvent) {
@@ -307,6 +313,7 @@ export function App() {
           senderId={senderId}
           setSenderId={setSenderId}
           readLeadFile={readLeadFile}
+          removeRecipient={removeRecipient}
           attachments={attachments}
           uploadMedia={uploadMedia}
           removeAttachment={removeAttachment}

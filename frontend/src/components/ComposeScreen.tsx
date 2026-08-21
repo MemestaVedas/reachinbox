@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, MouseEvent } from "react";
 import {
   AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, ChevronDown, Clock3,
@@ -21,6 +21,7 @@ interface ComposeScreenProps {
   senderId: string;
   setSenderId: (senderId: string) => void;
   readLeadFile: (event: ChangeEvent<HTMLInputElement>) => void;
+  removeRecipient: (recipient: string) => void;
   attachments: UploadedAttachment[];
   uploadMedia: (event: ChangeEvent<HTMLInputElement>) => void;
   removeAttachment: (attachment: UploadedAttachment) => void;
@@ -43,18 +44,34 @@ function AttachmentIcon({ contentType }: Pick<UploadedAttachment, "contentType">
 
 export function ComposeScreen({
   form, setForm, fileName, recipients, manualRecipient, setManualRecipient,
-  addManualRecipient, senders, senderId, setSenderId, readLeadFile,
+  addManualRecipient, senders, senderId, setSenderId, readLeadFile, removeRecipient,
   attachments, uploadMedia, removeAttachment, uploading, onBack, onSubmit,
   saving, showSendLater, setShowSendLater,
 }: ComposeScreenProps) {
   const leadFileRef = useRef<HTMLInputElement>(null);
   const mediaFileRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const [activeFormats, setActiveFormats] = useState<Record<string, boolean>>({});
+  const [showAllRecipients, setShowAllRecipients] = useState(false);
+
+  function updateToolbarState() {
+    const selectionNode = document.getSelection()?.anchorNode;
+    const block = selectionNode instanceof Element ? selectionNode.closest("blockquote") : selectionNode?.parentElement?.closest("blockquote");
+    setActiveFormats({
+      bold: document.queryCommandState("bold"),
+      italic: document.queryCommandState("italic"),
+      underline: document.queryCommandState("underline"),
+      insertOrderedList: document.queryCommandState("insertOrderedList"),
+      insertUnorderedList: document.queryCommandState("insertUnorderedList"),
+      blockquote: Boolean(block),
+    });
+  }
 
   function runCommand(command: string, value?: string) {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
     setForm({ ...form, body: editorRef.current?.innerHTML ?? "" });
+    updateToolbarState();
   }
 
   function preventToolbarBlur(event: MouseEvent<HTMLButtonElement>) {
@@ -68,7 +85,7 @@ export function ComposeScreen({
     runCommand("createLink", href);
   }
 
-  const visibleRecipients = recipients.slice(0, visibleRecipientCount);
+  const visibleRecipients = showAllRecipients ? recipients : recipients.slice(0, visibleRecipientCount);
   const overflowCount = recipients.length - visibleRecipients.length;
 
   return (
@@ -76,7 +93,7 @@ export function ComposeScreen({
       <header className="compose-header">
         <button type="button" onClick={onBack} className="back-button"><ArrowLeft size={18} />Compose New Email</button>
         <div className="compose-actions">
-          <button type="button" aria-label="Attach media or files" onClick={() => mediaFileRef.current?.click()}><Paperclip size={18} /></button>
+          <button type="button" className="paperclip-button" aria-label="Attach media or files" onClick={() => mediaFileRef.current?.click()}><Paperclip size={18} />{attachments.length > 0 ? <b>{attachments.length}</b> : null}</button>
           <button type="button" aria-label="Schedule send" onClick={() => setShowSendLater(!showSendLater)}><Clock3 size={18} /></button>
           <button type="submit" form="compose-email" className="send-button" disabled={saving || uploading}>{saving ? "Scheduling..." : "Send Later"}</button>
         </div>
@@ -98,8 +115,8 @@ export function ComposeScreen({
           <div className="recipient-field">
             <span>To</span>
             <div className="recipient-input-wrap">
-              {visibleRecipients.map((recipient) => <span className="recipient-chip" key={recipient}>{recipient}</span>)}
-              {overflowCount > 0 ? <span className="recipient-chip recipient-overflow" title={recipients.slice(visibleRecipientCount).join(", ")}>+{overflowCount}</span> : null}
+              {visibleRecipients.map((recipient) => <span className="recipient-chip" key={recipient}><span>{recipient}</span><button type="button" aria-label={`Remove ${recipient}`} onClick={() => removeRecipient(recipient)}><X size={11} /></button></span>)}
+              {!showAllRecipients && overflowCount > 0 ? <button type="button" className="recipient-chip recipient-overflow" title="Show all recipients" onClick={() => setShowAllRecipients(true)}>+{overflowCount}</button> : null}
               <input value={manualRecipient} onChange={(event) => setManualRecipient(event.target.value)} onKeyDown={(event) => {
                 if (event.key === "Enter") { event.preventDefault(); addManualRecipient(); }
               }} onBlur={addManualRecipient} placeholder={recipients.length ? "Add recipient" : "recipient@example.com"} aria-label="Recipient email address" />
@@ -120,22 +137,30 @@ export function ComposeScreen({
             <button type="button" aria-label="Redo" title="Redo" onMouseDown={preventToolbarBlur} onClick={() => runCommand("redo")}><Redo2 size={16} /></button>
             <span className="toolbar-divider" />
             <button type="button" aria-label="Heading" title="Heading" onMouseDown={preventToolbarBlur} onClick={() => runCommand("formatBlock", "h2")}><span className="toolbar-heading">Tt</span></button>
-            <button type="button" aria-label="Bold" title="Bold" onMouseDown={preventToolbarBlur} onClick={() => runCommand("bold")}><Bold size={16} /></button>
-            <button type="button" aria-label="Italic" title="Italic" onMouseDown={preventToolbarBlur} onClick={() => runCommand("italic")}><Italic size={16} /></button>
-            <button type="button" aria-label="Underline" title="Underline" onMouseDown={preventToolbarBlur} onClick={() => runCommand("underline")}><Underline size={16} /></button>
+            <button type="button" className={activeFormats.bold ? "toolbar-active" : ""} aria-label="Bold" title="Bold" onMouseDown={preventToolbarBlur} onClick={() => runCommand("bold")}><Bold size={16} /></button>
+            <button type="button" className={activeFormats.italic ? "toolbar-active" : ""} aria-label="Italic" title="Italic" onMouseDown={preventToolbarBlur} onClick={() => runCommand("italic")}><Italic size={16} /></button>
+            <button type="button" className={activeFormats.underline ? "toolbar-active" : ""} aria-label="Underline" title="Underline" onMouseDown={preventToolbarBlur} onClick={() => runCommand("underline")}><Underline size={16} /></button>
             <span className="toolbar-divider" />
             <button type="button" aria-label="Align left" title="Align left" onMouseDown={preventToolbarBlur} onClick={() => runCommand("justifyLeft")}><AlignLeft size={16} /></button>
             <button type="button" aria-label="Align center" title="Align center" onMouseDown={preventToolbarBlur} onClick={() => runCommand("justifyCenter")}><AlignCenter size={16} /></button>
             <button type="button" aria-label="Align right" title="Align right" onMouseDown={preventToolbarBlur} onClick={() => runCommand("justifyRight")}><AlignRight size={16} /></button>
             <span className="toolbar-divider" />
-            <button type="button" aria-label="Numbered list" title="Numbered list" onMouseDown={preventToolbarBlur} onClick={() => runCommand("insertOrderedList")}><ListOrdered size={16} /></button>
-            <button type="button" aria-label="Bulleted list" title="Bulleted list" onMouseDown={preventToolbarBlur} onClick={() => runCommand("insertUnorderedList")}><List size={16} /></button>
+            <button type="button" className={activeFormats.insertOrderedList ? "toolbar-active" : ""} aria-label="Numbered list" title="Numbered list" onMouseDown={preventToolbarBlur} onClick={() => runCommand("insertOrderedList")}><ListOrdered size={16} /></button>
+            <button type="button" className={activeFormats.insertUnorderedList ? "toolbar-active" : ""} aria-label="Bulleted list" title="Bulleted list" onMouseDown={preventToolbarBlur} onClick={() => runCommand("insertUnorderedList")}><List size={16} /></button>
             <button type="button" aria-label="Decrease indent" title="Decrease indent" onMouseDown={preventToolbarBlur} onClick={() => runCommand("outdent")}><IndentDecrease size={16} /></button>
             <button type="button" aria-label="Increase indent" title="Increase indent" onMouseDown={preventToolbarBlur} onClick={() => runCommand("indent")}><IndentIncrease size={16} /></button>
-            <button type="button" aria-label="Quote" title="Quote" onMouseDown={preventToolbarBlur} onClick={() => runCommand("formatBlock", "blockquote")}><Quote size={16} /></button>
+            <button type="button" className={activeFormats.blockquote ? "toolbar-active" : ""} aria-label="Quote" title="Quote" onMouseDown={preventToolbarBlur} onClick={() => runCommand("formatBlock", "blockquote")}><Quote size={16} /></button>
             <button type="button" aria-label="Add link" title="Add link" onMouseDown={preventToolbarBlur} onClick={insertLink}><Link2 size={16} /></button>
           </div>
-          <div ref={editorRef} className="editor-content" contentEditable role="textbox" aria-multiline="true" data-placeholder="Type Your Reply..." suppressContentEditableWarning onInput={(event) => setForm({ ...form, body: event.currentTarget.innerHTML })} />
+          <div ref={editorRef} className="editor-content" contentEditable role="textbox" aria-multiline="true" data-placeholder="Type Your Reply..." suppressContentEditableWarning onInput={(event) => { setForm({ ...form, body: event.currentTarget.innerHTML }); updateToolbarState(); }} onKeyUp={updateToolbarState} onMouseUp={updateToolbarState} onKeyDown={(event) => {
+            if (event.key !== "Enter") return;
+            const selectionNode = document.getSelection()?.anchorNode;
+            const blockquote = selectionNode instanceof Element ? selectionNode.closest("blockquote") : selectionNode?.parentElement?.closest("blockquote");
+            if (blockquote && blockquote.textContent?.trim() === "") {
+              event.preventDefault();
+              runCommand("formatBlock", "div");
+            }
+          }} />
         </section>
 
         <div className="attachment-zone">
@@ -143,7 +168,7 @@ export function ComposeScreen({
           <span>8 MB per file · 25 MB per email</span>
           {attachments.length > 0 ? <div className="attachment-list" aria-label="Attachments">
             {attachments.map((attachment) => <div className="attachment-card" key={attachment.id}>
-              <AttachmentIcon contentType={attachment.contentType} />
+              {attachment.previewUrl ? <img className="attachment-preview" src={attachment.previewUrl} alt="" /> : <AttachmentIcon contentType={attachment.contentType} />}
               <span><strong>{attachment.fileName}</strong><small>{formatFileSize(attachment.sizeBytes)}</small></span>
               <button type="button" aria-label={`Remove ${attachment.fileName}`} onClick={() => void removeAttachment(attachment)}><X size={14} /></button>
             </div>)}

@@ -34,6 +34,7 @@ export interface UploadedAttachment {
   fileName: string;
   contentType: string;
   sizeBytes: number;
+  previewUrl?: string;
 }
 
 export interface ComposeForm {
