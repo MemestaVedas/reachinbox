@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, LogOut, Moon, Search, Sun, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, LogOut, Search, X } from "lucide-react";
 
 import type { ComposeForm, EmailRecord, Folder, Screen, SenderOption, UploadedAttachment, UserProfile } from "./types";
 import {
@@ -420,32 +420,22 @@ export function App() {
           setError("");
           setScreen("compose");
         }}
+        darkMode={darkMode}
+        onToggleTheme={() => setDarkMode((current) => !current)}
       />
 
       <main className="workspace">
         <header className="workspace-header">
           <div className="mobile-brand">ONG</div>
-          <div className="search-box">
-            <Search size={16} />
-            <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search recipient or subject"
-              aria-label="Search emails"
-            />
-          </div>
+          <h1 className="header-section-title">{folder === "scheduled" ? "Scheduled" : "Sent"}<small>{visibleEmails.length}</small></h1>
           <button className="header-icon" aria-label="Refresh" onClick={() => void loadEmails()}>
             ↻
-          </button>
-          <button className="theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setDarkMode((current) => !current)}>
-            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <div className="header-profile ml-auto">
             <button className="profile-trigger" aria-label="Open account menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((current) => !current)}>
               <span className="profile-avatar">
                 {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}
               </span>
-              <span className="header-user-details"><strong>{user.name}</strong><small>{user.email}</small></span>
             </button>
             {profileOpen ? <div className="profile-menu" role="menu">
               <div className="profile-menu-user"><span className="profile-avatar profile-menu-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.email}</small></span></div>
@@ -474,11 +464,9 @@ export function App() {
           </div>
 
           <div className="list-heading">
-            <div>
-              <h1>
-                {folder === "scheduled" ? "Scheduled" : "Sent"}{" "}
-                <small>{visibleEmails.length}</small>
-              </h1>
+            <div className="search-box">
+              <Search size={16} />
+              <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search recipient or subject" aria-label="Search emails" />
             </div>
             <button className="compose-button" onClick={() => setScreen("compose")}>
               Compose

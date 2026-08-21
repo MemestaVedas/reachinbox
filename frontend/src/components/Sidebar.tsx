@@ -1,4 +1,4 @@
-import { Clock3, Send } from "lucide-react";
+import { Clock3, Moon, Send, Sun } from "lucide-react";
 import type { Folder } from "../types";
 
 interface SidebarProps {
@@ -7,6 +7,8 @@ interface SidebarProps {
   sentCount: number;
   setFolder: (folder: Folder) => void;
   onCompose: () => void;
+  darkMode: boolean;
+  onToggleTheme: () => void;
 }
 
 export function Sidebar({
@@ -14,7 +16,7 @@ export function Sidebar({
   scheduledCount,
   sentCount,
   setFolder,
-  onCompose,
+  onCompose, darkMode, onToggleTheme,
 }: SidebarProps) {
   return (
     <aside className="sidebar-light">
@@ -23,14 +25,16 @@ export function Sidebar({
         Compose
       </button>
 
-      <span className="overline sidebar-label">Core</span>
-
       <button
         className={`side-link ${folder === "scheduled" ? "selected" : ""}`}
         onClick={() => setFolder("scheduled")}
       >
         <Clock3 size={15} />
         Scheduled <b>{scheduledCount}</b>
+      </button>
+      <button type="button" className="sidebar-theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme}>
+        {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+        <span>{darkMode ? "Light mode" : "Dark mode"}</span>
       </button>
 
       <button
