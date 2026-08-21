@@ -1350,29 +1350,43 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 /* -------------------------------------------------------------------------- */
 .theme-dark, .theme-dark body {
   color: #e9e8f4;
-  background: #0b0c16;
+  background-color: #0b0c16;
 }
 
 .theme-dark body:before {
   position: fixed;
-  top: -170px;
+  top: -160px;
   left: 50%;
   z-index: 0;
   width: 760px;
   height: 360px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, #817dff42 0%, #b482ff24 35%, transparent 72%);
+  background: radial-gradient(ellipse at center, rgba(180, 130, 255, 0.32) 0%, rgba(117, 121, 255, 0.18) 45%, transparent 72%);
   content: "";
-  filter: blur(42px);
+  filter: blur(48px);
   pointer-events: none;
   transform: translateX(-50%);
+}
+
+.theme-dark body:after {
+  position: fixed;
+  top: -120px;
+  right: -80px;
+  z-index: 0;
+  width: 540px;
+  height: 540px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(248, 215, 255, 0.22) 0%, rgba(180, 130, 255, 0.28) 35%, rgba(117, 121, 255, 0.16) 60%, transparent 75%);
+  content: "";
+  filter: blur(52px);
+  pointer-events: none;
 }
 
 .theme-dark .app, .theme-dark .compose-page, .theme-dark .detail-page, .theme-dark .login-page {
   position: relative;
   z-index: 1;
   color: #e9e8f4;
-  background: #0b0c16;
+  background: transparent;
 }
 
 .theme-dark .sidebar-light {
