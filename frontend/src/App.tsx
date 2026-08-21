@@ -72,10 +72,10 @@ export function App() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
+  const [toast, setToast] = useState<{ id: number; title: string; message: string; kind: "success" | "error" } | null>(null);
 
-  function showToast(nextMessage: string) {
-    setToast({ id: Date.now(), message: nextMessage });
+  function showToast(title: string, nextMessage: string, kind: "success" | "error" = "success") {
+    setToast({ id: Date.now(), title, message: nextMessage, kind });
   }
 
   // -------------------------------------------------------------------------
@@ -108,6 +108,25 @@ export function App() {
     if (screen !== "login") void loadEmails();
   }, [screen]);
 
+  useEffect(() => {
+    if (screen === "login" || !authToken) return;
+    let active = true;
+    const pollNotifications = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/notifications`, { headers: { Authorization: `Bearer ${authToken}` } });
+        if (!active || !response.ok) return;
+        const payload = await response.json() as { notifications?: Array<{ title?: string; message?: string; kind?: "success" | "error" }> };
+        const notification = payload.notifications?.at(-1);
+        if (notification?.message) showToast(notification.title ?? "Notification", notification.message, notification.kind ?? "error");
+      } catch {
+        // Notification polling is best effort and must not interrupt composing.
+      }
+    };
+    void pollNotifications();
+    const interval = window.setInterval(() => void pollNotifications(), 2000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [authToken, screen]);
+
   // -------------------------------------------------------------------------
   // Auth
   // -------------------------------------------------------------------------
@@ -139,7 +158,7 @@ export function App() {
     const emails = text.match(/[^\s,;]+@[^\s,;]+\.[^\s,;]+/gi) ?? [];
     setRecipients((current) => [...new Set([...current, ...emails.map((email) => email.toLowerCase())])]);
     setFileName(file.name);
-    showToast(`Detected ${new Set(emails.map((email) => email.toLowerCase())).size} email IDs from ${file.name}`);
+    showToast("Leads detected", `Detected ${new Set(emails.map((email) => email.toLowerCase())).size} from ${file.name}`);
     event.target.value = "";
   }
 
@@ -244,7 +263,7 @@ export function App() {
       });
       if (!response.ok) throw new Error("Could not schedule");
       setMessage(`${recipients.length} emails scheduled successfully.`);
-      showToast(`Scheduled ${recipients.length} email${recipients.length === 1 ? "" : "s"} successfully`);
+      showToast("Success", `Scheduled ${recipients.length} email${recipients.length === 1 ? "" : "s"} successfully`);
       setCompose(blankForm());
       setRecipients([]);
       setManualRecipient("");
@@ -298,7 +317,7 @@ export function App() {
           showSendLater={showSendLater}
           setShowSendLater={setShowSendLater}
         />
-        {toast ? <Toast key={toast.id} message={toast.message} onClose={() => setToast(null)} /> : null}
+        {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} onClose={() => setToast(null)} /> : null}
       </>
     );
   }
@@ -321,7 +340,7 @@ export function App() {
 
   return (
     <div className="app">
-      {toast ? <Toast key={toast.id} message={toast.message} onClose={() => setToast(null)} /> : null}
+      {toast ? <Toast key={toast.id} title={toast.title} message={toast.message} kind={toast.kind} onClose={() => setToast(null)} /> : null}
       <Sidebar
         folder={folder}
         scheduledCount={scheduled.length}

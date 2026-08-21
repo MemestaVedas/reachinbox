@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
 
 interface ToastProps {
+  title: string;
   message: string;
+  kind?: "success" | "error";
   onClose: () => void;
   duration?: number;
 }
 
-export function Toast({ message, onClose, duration = 4200 }: ToastProps) {
+export function Toast({ title, message, kind = "success", onClose, duration = 4200 }: ToastProps) {
   const [closing, setClosing] = useState(false);
   const timerRef = useRef<number | null>(null);
 
@@ -39,14 +41,14 @@ export function Toast({ message, onClose, duration = 4200 }: ToastProps) {
 
   return (
     <div
-      className={`toast ${closing ? "toast-closing" : ""}`}
-      role="status"
+      className={`toast toast-${kind} ${closing ? "toast-closing" : ""}`}
+      role={kind === "error" ? "alert" : "status"}
       aria-live="polite"
       onMouseEnter={pauseTimer}
       onMouseLeave={startTimer}
     >
-      <CheckCircle2 size={18} aria-hidden="true" />
-      <span>{message}</span>
+      <span className="toast-icon">{kind === "error" ? <AlertCircle size={25} aria-hidden="true" /> : <CheckCircle2 size={25} aria-hidden="true" />}</span>
+      <span className="toast-copy"><strong>{title}</strong><span>{message}</span></span>
       <button type="button" aria-label="Close notification" onClick={dismiss}><X size={16} /></button>
     </div>
   );

@@ -7,6 +7,18 @@ import { emailQueue, EMAIL_QUEUE_NAME, type SendEmailJobData } from "./queue.js"
 
 const concurrency = Number(process.env.WORKER_CONCURRENCY ?? 5);
 const minimumDelayMs = Number(process.env.MIN_DELAY_MS ?? 2_000);
+const NOTIFICATION_PREFIX = "notifications:";
+
+async function publishNotification(userId: string, title: string, message: string, kind: "success" | "error"): Promise<void> {
+	await redis.rpush(`${NOTIFICATION_PREFIX}${userId}`, JSON.stringify({
+		id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		title,
+		message,
+		kind,
+		createdAt: new Date().toISOString(),
+	}));
+	await redis.ltrim(`${NOTIFICATION_PREFIX}${userId}`, -20, -1);
+}
 
 function hourWindow(date: Date): string {
 	return date.toISOString().slice(0, 13);
@@ -57,12 +69,14 @@ async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 	if (!(await reserveHourlySlot(email.senderId, email.batch.hourlyLimit))) {
 		const delayMs = nextHourDelayMs(new Date());
 		const scheduledFor = new Date(Date.now() + delayMs);
+		const message = `Hourly limit reached. Delivery moved to ${scheduledFor.toISOString()}.`;
+		await publishNotification(email.batch.userId, "Rate Limited", message, "error");
 		await prisma.scheduledEmail.update({
 			where: { id: email.id },
 			data: { status: "pending", scheduledFor },
 		});
 		await job.moveToDelayed(scheduledFor.getTime(), job.token);
-		throw new DelayedError("Hourly sender limit reached; rescheduled for the next UTC hour.");
+		throw new DelayedError(message);
 	}
 
 	try {
@@ -97,6 +111,9 @@ async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 		const attempts = job.attemptsMade + 1;
 		const maxAttempts = job.opts.attempts ?? 1;
 		const message = error instanceof Error ? error.message : "Unknown delivery error";
+		if (/429|rate.?limit|too many requests/i.test(message)) {
+			await publishNotification(email.batch.userId, "Rate Limited", message, "error");
+		}
 
 		await prisma.scheduledEmail.update({
 			where: { id: email.id },

@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import { prisma } from "./lib/db.js";
+import { redis } from "./lib/redis.js";
 import { emailQueue } from "./queue.js";
 import { scheduleRecipients } from "./scheduling.js";
 
@@ -11,6 +12,7 @@ const port = Number(process.env.PORT ?? 4000);
 const googleClient = new OAuth2Client();
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
 const MAX_BATCH_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+const NOTIFICATION_PREFIX = "notifications:";
 
 app.use(express.json({ limit: "2mb" }));
 app.use((request, response, next) => {
@@ -459,6 +461,22 @@ app.get("/api/senders", async (request, response) => {
   });
 
   response.json({ senders: senders.map((sender) => ({ id: sender.id, email: sender.etherealEmail })) });
+});
+
+app.get("/api/notifications", async (request, response) => {
+  const user = await authenticatedUser(request, response);
+  if (!user) return;
+
+  const key = `${NOTIFICATION_PREFIX}${user.id}`;
+  const notifications = await redis.lrange(key, 0, -1);
+  await redis.del(key);
+  response.json({ notifications: notifications.flatMap((value) => {
+    try {
+      return [JSON.parse(value)];
+    } catch {
+      return [];
+    }
+  }) });
 });
 
 app.get("/api/emails", async (request, response) => {
