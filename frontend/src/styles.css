@@ -754,6 +754,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   padding: 10px 0;
   border: 0;
   color: #47515d;
+  background: transparent;
   font-size: 11px;
   outline: 0;
 }
@@ -808,6 +809,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   border: 0;
   outline: 0;
   color: #46515b;
+  background: transparent;
   font-size: 10px;
 }
 
@@ -1502,11 +1504,18 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   background: #151627;
 }
 
-.theme-dark .search-box input, .theme-dark .editor-content, .theme-dark .compose-fields > label > input {
+.theme-dark .search-box input,
+.theme-dark .editor-content,
+.theme-dark .compose-fields > label > input,
+.theme-dark .recipient-input-wrap input {
   color: #e5e1f1;
+  background: transparent;
 }
 
-.theme-dark .search-box input::placeholder, .theme-dark .editor-content:empty:before {
+.theme-dark .search-box input::placeholder,
+.theme-dark .compose-fields > label > input::placeholder,
+.theme-dark .recipient-input-wrap input::placeholder,
+.theme-dark .editor-content:empty:before {
   color: #77758c;
 }
 
