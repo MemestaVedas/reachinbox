@@ -19,6 +19,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { ComposeScreen } from "./components/ComposeScreen";
 import { EmailRow } from "./components/EmailRow";
 import { DetailScreen } from "./components/DetailScreen";
+import { Toast } from "./components/Toast";
 
 // ---------------------------------------------------------------------------
 // Fallback demo data shown while the API is offline
@@ -71,6 +72,11 @@ export function App() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
+
+  function showToast(nextMessage: string) {
+    setToast({ id: Date.now(), message: nextMessage });
+  }
 
   // -------------------------------------------------------------------------
   // Data fetching
@@ -133,6 +139,7 @@ export function App() {
     const emails = text.match(/[^\s,;]+@[^\s,;]+\.[^\s,;]+/gi) ?? [];
     setRecipients((current) => [...new Set([...current, ...emails.map((email) => email.toLowerCase())])]);
     setFileName(file.name);
+    showToast(`Detected ${new Set(emails.map((email) => email.toLowerCase())).size} from ${file.name}`);
     event.target.value = "";
   }
 
@@ -237,6 +244,7 @@ export function App() {
       });
       if (!response.ok) throw new Error("Could not schedule");
       setMessage(`${recipients.length} emails scheduled successfully.`);
+      showToast(`Scheduled ${recipients.length} email${recipients.length === 1 ? "" : "s"} successfully`);
       setCompose(blankForm());
       setRecipients([]);
       setManualRecipient("");
@@ -267,28 +275,31 @@ export function App() {
 
   if (screen === "compose") {
     return (
-      <ComposeScreen
-        form={compose}
-        setForm={setCompose}
-        fileName={fileName}
-        recipients={recipients}
-        manualRecipient={manualRecipient}
-        setManualRecipient={setManualRecipient}
-        addManualRecipient={addManualRecipient}
-        senders={senders}
-        senderId={senderId}
-        setSenderId={setSenderId}
-        readLeadFile={readLeadFile}
-        attachments={attachments}
-        uploadMedia={uploadMedia}
-        removeAttachment={removeAttachment}
-        uploading={uploading}
-        onBack={() => setScreen("home")}
-        onSubmit={scheduleEmail}
-        saving={saving}
-        showSendLater={showSendLater}
-        setShowSendLater={setShowSendLater}
-      />
+      <>
+        <ComposeScreen
+          form={compose}
+          setForm={setCompose}
+          fileName={fileName}
+          recipients={recipients}
+          manualRecipient={manualRecipient}
+          setManualRecipient={setManualRecipient}
+          addManualRecipient={addManualRecipient}
+          senders={senders}
+          senderId={senderId}
+          setSenderId={setSenderId}
+          readLeadFile={readLeadFile}
+          attachments={attachments}
+          uploadMedia={uploadMedia}
+          removeAttachment={removeAttachment}
+          uploading={uploading}
+          onBack={() => setScreen("home")}
+          onSubmit={scheduleEmail}
+          saving={saving}
+          showSendLater={showSendLater}
+          setShowSendLater={setShowSendLater}
+        />
+        {toast ? <Toast key={toast.id} message={toast.message} onClose={() => setToast(null)} /> : null}
+      </>
     );
   }
 
@@ -310,6 +321,7 @@ export function App() {
 
   return (
     <div className="app">
+      {toast ? <Toast key={toast.id} message={toast.message} onClose={() => setToast(null)} /> : null}
       <Sidebar
         folder={folder}
         scheduledCount={scheduled.length}
