@@ -72,9 +72,9 @@ export function App() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [toast, setToast] = useState<{ id: number; title: string; message: string; kind: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{ id: number; title: string; message: string; kind: "success" | "error" | "warning" } | null>(null);
 
-  function showToast(title: string, nextMessage: string, kind: "success" | "error" = "success") {
+  function showToast(title: string, nextMessage: string, kind: "success" | "error" | "warning" = "success") {
     setToast({ id: Date.now(), title, message: nextMessage, kind });
   }
 
@@ -115,7 +115,7 @@ export function App() {
       try {
         const response = await fetch(`${API_BASE}/api/notifications`, { headers: { Authorization: `Bearer ${authToken}` } });
         if (!active || !response.ok) return;
-        const payload = await response.json() as { notifications?: Array<{ title?: string; message?: string; kind?: "success" | "error" }> };
+        const payload = await response.json() as { notifications?: Array<{ title?: string; message?: string; kind?: "success" | "error" | "warning" }> };
         const notification = payload.notifications?.at(-1);
         if (notification?.message) showToast(notification.title ?? "Notification", notification.message, notification.kind ?? "error");
       } catch {
@@ -236,6 +236,7 @@ export function App() {
 
   function removeRecipient(recipient: string) {
     setRecipients((current) => current.filter((value) => value !== recipient));
+    showToast("🗑️ Deleted", `Deleted ${recipient}`, "warning");
   }
 
   async function scheduleEmail(event: FormEvent) {

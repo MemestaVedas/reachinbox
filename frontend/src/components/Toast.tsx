@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Trash2, X } from "lucide-react";
 
 interface ToastProps {
   title: string;
   message: string;
-  kind?: "success" | "error";
+  kind?: "success" | "error" | "warning";
   onClose: () => void;
   duration?: number;
 }
@@ -47,7 +47,7 @@ export function Toast({ title, message, kind = "success", onClose, duration = 42
       onMouseEnter={pauseTimer}
       onMouseLeave={startTimer}
     >
-      <span className="toast-icon">{kind === "error" ? <AlertCircle size={25} aria-hidden="true" /> : <CheckCircle2 size={25} aria-hidden="true" />}</span>
+      <span className="toast-icon">{kind === "error" ? <AlertCircle size={25} aria-hidden="true" /> : kind === "warning" ? <Trash2 size={25} aria-hidden="true" /> : <CheckCircle2 size={25} aria-hidden="true" />}</span>
       <span className="toast-copy"><strong>{title}</strong><span>{message}</span></span>
       <button type="button" aria-label="Close notification" onClick={dismiss}><X size={16} /></button>
     </div>
