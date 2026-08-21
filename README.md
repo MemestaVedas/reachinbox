@@ -48,6 +48,11 @@ In the project root, start the PostgreSQL and Redis containers:
 ```powershell
 docker compose up -d  # Run every time to start databases
 ```
+*Expected Output on Success:*
+```text
+✔ Container reachinbox-postgres-1 Running
+✔ Container reachinbox-redis-1    Running
+```
 
 ---
 
@@ -62,10 +67,18 @@ docker compose up -d  # Run every time to start databases
    ```powershell
    npm install  # One-time setup only
    ```
+   *Expected Output on Success:*
+   ```text
+   added XXX packages, and audited YYY packages in Zs
+   ```
 
 3. Create the environment file:
    ```powershell
    copy .env.example .env  # One-time setup only
+   ```
+   *Expected Output on Success:*
+   ```text
+   1 file(s) copied.
    ```
 
 4. **Update `.env`**:
@@ -79,15 +92,28 @@ docker compose up -d  # Run every time to start databases
    npx prisma generate  # One-time setup (and after schema changes)
    npx prisma db push   # One-time setup (and after schema changes)
    ```
+   *Expected Output on Success:*
+   ```text
+   ✔ Generated Prisma Client (v6.14.0) to .\node_modules\@prisma\client in 304ms
+   Database schema is up to date!
+   ```
 
 6. Start the API Server:
    ```powershell
    npm run dev  # Run every time to start server
    ```
+   *Expected Output on Success:*
+   ```text
+   API server listening on port 4000
+   ```
 
 7. Start the Queue Worker (in a separate terminal inside `backend/`):
    ```powershell
    npm run worker  # Run every time to start worker
+   ```
+   *Expected Output on Success:*
+   ```text
+   Queue worker active & listening for BullMQ jobs...
    ```
 
 ---
@@ -103,10 +129,18 @@ docker compose up -d  # Run every time to start databases
    ```powershell
    npm install  # One-time setup only
    ```
+   *Expected Output on Success:*
+   ```text
+   added XXX packages, and audited YYY packages in Zs
+   ```
 
 3. Create the environment file:
    ```powershell
    copy .env.example .env  # One-time setup only
+   ```
+   *Expected Output on Success:*
+   ```text
+   1 file(s) copied.
    ```
 
 4. **Update `.env`**:
@@ -117,6 +151,13 @@ docker compose up -d  # Run every time to start databases
 5. Start the development server:
    ```powershell
    npm run dev  # Run every time to start dev dashboard
+   ```
+   *Expected Output on Success:*
+   ```text
+     VITE v7.3.6  ready in X ms
+
+     ➜  Local:   http://localhost:5173/
+     ➜  Network: use --host to expose
    ```
 
 6. Open your browser to `http://localhost:5173`.
@@ -134,11 +175,26 @@ npm run build        # Compiles TypeScript (verification/production)
 npm test             # Runs integration tests (including 1000-recipient burst tests)
 npx prisma validate  # Checks schema validity
 ```
+*Expected Output on Success (`npm test`):*
+```text
+PASS  tests/scheduling.test.ts
+  ✓ Spacing & scheduling limits (X ms)
+  ✓ 1000-recipient burst limits (Y ms)
+```
 
 ### Frontend Build
 ```powershell
 cd frontend
 npm run build        # Checks TypeScript compilation and runs Vite build
+```
+*Expected Output on Success:*
+```text
+vite v7.3.6 building client environment for production...
+✓ 1585 modules transformed.
+dist/index.html                   0.47 kB
+dist/assets/index-CGxq-81L.css   10.28 kB
+dist/assets/index-BG-Q6RZK.js   207.24 kB
+✓ built in 6.50s
 ```
 
 ---
