@@ -135,13 +135,16 @@ export function ComposeScreen({
         {showSendLater && (
           <div className="send-later">
             <strong>Send Later</strong>
-            <label>
+            <label style={{ gap: "4px" }}>
               Pick date &amp; time
               <input
                 type="datetime-local"
                 value={form.startTime}
                 onChange={(e) => setForm({ ...form, startTime: e.target.value })}
               />
+              <span style={{ fontSize: "8px", color: "#84909a", marginTop: "2px" }}>
+                Timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone} (Local)
+              </span>
             </label>
             <button type="button" onClick={() => setShowSendLater(false)}>
               Done

@@ -36,10 +36,16 @@ export function clearGoogleSession(): void {
 }
 
 export function blankForm() {
+  const localDate = new Date(Date.now() + 15 * 60_000);
+  const offsetMinutes = localDate.getTimezoneOffset();
+  // Adjust time by subtracting offset to construct ISO format in local time
+  const localIso = new Date(localDate.getTime() - offsetMinutes * 60 * 1000)
+    .toISOString()
+    .slice(0, 16);
   return {
     subject: "",
     body: "",
-    startTime: new Date(Date.now() + 15 * 60_000).toISOString().slice(0, 16),
+    startTime: localIso,
     delaySeconds: 2,
     hourlyLimit: 200,
   };

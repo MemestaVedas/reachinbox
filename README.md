@@ -244,4 +244,14 @@ The BullMQ worker prints active state, job claim processes, Ethereal SMTP delive
 - Press `F12` (or Right-Click -> Inspect) and select the **Console** tab.
 - This displays API connectivity errors, token validation callbacks, CSV/TXT address parsing feedback, and runtime warning indicators.
 
+---
+
+## Timezone Handling
+
+- **Local Time Input**: The "Send Later" datetime-local picker operates fully in the user's native system timezone (e.g., `Asia/Kolkata` or `America/New_York`).
+- **Standardized Ingestion**: On schedule submission, the frontend converts the local datetime string into a standard UTC ISO 8601 timestamp (`.toISOString()`) before hitting `POST /api/batches`.
+- **Backend Scheduling**: The backend registers job executions on the computed UTC times, which eliminates discrepancy across client clock deviations or backend cluster zone settings.
+- **Localized Display**: The scheduled execution display pills map the database UTC timestamps back to the client's local formatting automatically.
+
+
 
