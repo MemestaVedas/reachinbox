@@ -3,6 +3,7 @@ export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string 
 
 export const USER_STORAGE_KEY = "reachinbox-user";
 export const AUTH_TOKEN_STORAGE_KEY = "reachinbox-google-token";
+export const THEME_STORAGE_KEY = "reachinbox-theme";
 
 export function readStoredSession(key: string): string | null {
   const persistent = localStorage.getItem(key);

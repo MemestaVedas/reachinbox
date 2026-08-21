@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Moon, Sun } from "lucide-react";
 import type { FormEvent } from "react";
 import type { UserProfile } from "../types";
 import { API_BASE, GOOGLE_CLIENT_ID } from "../utils";
@@ -8,9 +9,11 @@ interface LoginScreenProps {
   onGoogleUser: (user: UserProfile, token: string) => void;
   onError: (message: string) => void;
   error: string;
+  darkMode: boolean;
+  onToggleTheme: () => void;
 }
 
-export function LoginScreen({ onLogin, onGoogleUser, onError, error }: LoginScreenProps) {
+export function LoginScreen({ onLogin, onGoogleUser, onError, error, darkMode, onToggleTheme }: LoginScreenProps) {
   const googleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,6 +62,9 @@ export function LoginScreen({ onLogin, onGoogleUser, onError, error }: LoginScre
 
   return (
     <div className="login-page">
+      <button type="button" className="theme-toggle login-theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme}>
+        {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
       <form className="login-card" onSubmit={onLogin}>
         <h1>Login</h1>
 

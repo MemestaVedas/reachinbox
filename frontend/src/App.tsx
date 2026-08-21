@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { LogOut, Search, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, LogOut, Moon, Search, Sun, X } from "lucide-react";
 
 import type { ComposeForm, EmailRecord, Folder, Screen, SenderOption, UploadedAttachment, UserProfile } from "./types";
 import {
@@ -13,6 +13,7 @@ import {
   plainTextFromHtml,
   readStoredSession,
   saveGoogleSession,
+  THEME_STORAGE_KEY,
 } from "./utils";
 
 import { Sidebar } from "./components/Sidebar";
@@ -50,6 +51,12 @@ export function App() {
   const [authToken, setAuthToken] = useState(
     () => readStoredSession(AUTH_TOKEN_STORAGE_KEY) ?? "",
   );
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === "dark");
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("theme-dark", darkMode);
+    localStorage.setItem(THEME_STORAGE_KEY, darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   // Email lists
   const [scheduled, setScheduled] = useState<EmailRecord[]>([]);
@@ -307,6 +314,8 @@ export function App() {
         onGoogleUser={handleGoogleUser}
         onError={setError}
         error={error}
+        darkMode={darkMode}
+        onToggleTheme={() => setDarkMode((current) => !current)}
       />
     );
   }
@@ -378,6 +387,8 @@ export function App() {
       const rightDate = new Date(right.sentAt ?? right.scheduledFor).getTime();
       return sortMode === "date-asc" ? leftDate - rightDate : rightDate - leftDate;
     });
+  const failedCount = sent.filter((email) => email.status === "failed").length;
+  const nextScheduled = scheduled.filter((email) => email.status === "pending" || email.status === "processing").sort((a, b) => new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime())[0];
 
   return (
     <div className="app">
@@ -413,6 +424,9 @@ export function App() {
           <button className="header-icon" aria-label="Refresh" onClick={() => void loadEmails()}>
             ↻
           </button>
+          <button className="theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setDarkMode((current) => !current)}>
+            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
           <div className="header-profile ml-auto flex items-center gap-2">
             <span className="profile-avatar">
               {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}
@@ -438,6 +452,13 @@ export function App() {
             </div>
           )}
           {error && <div className="error-message">{error}</div>}
+
+          <div className="dashboard-summary" aria-label="Mailbox summary">
+            <div className="summary-card"><Clock3 size={16} /><span><small>Scheduled</small><strong>{scheduled.length}</strong></span></div>
+            <div className="summary-card"><CheckCircle2 size={16} /><span><small>Delivered</small><strong>{sent.filter((email) => email.status === "sent").length}</strong></span></div>
+            <div className="summary-card"><AlertTriangle size={16} /><span><small>Needs attention</small><strong>{failedCount}</strong></span></div>
+            <div className="summary-card summary-next"><span><small>Next send</small><strong>{nextScheduled ? new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(nextScheduled.scheduledFor)) : "None queued"}</strong></span></div>
+          </div>
 
           <div className="list-heading">
             <div>
