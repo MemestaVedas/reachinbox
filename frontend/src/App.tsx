@@ -37,7 +37,7 @@ export function App() {
   // Restore session on first render
   const [screen, setScreen] = useState<Screen>(() =>
     sessionStorage.getItem(USER_STORAGE_KEY) &&
-    sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+      sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
       ? "home"
       : "login",
   );
@@ -139,7 +139,7 @@ export function App() {
     const emails = text.match(/[^\s,;]+@[^\s,;]+\.[^\s,;]+/gi) ?? [];
     setRecipients((current) => [...new Set([...current, ...emails.map((email) => email.toLowerCase())])]);
     setFileName(file.name);
-    showToast(`Detected ${new Set(emails.map((email) => email.toLowerCase())).size} from ${file.name}`);
+    showToast(`Detected ${new Set(emails.map((email) => email.toLowerCase())).size} mails from ${file.name}`);
     event.target.value = "";
   }
 
@@ -314,9 +314,9 @@ export function App() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredEmails = normalizedSearch
     ? emails.filter((email) =>
-        email.recipient.toLowerCase().includes(normalizedSearch)
-        || email.batch.subject.toLowerCase().includes(normalizedSearch),
-      )
+      email.recipient.toLowerCase().includes(normalizedSearch)
+      || email.batch.subject.toLowerCase().includes(normalizedSearch),
+    )
     : emails;
 
   return (
@@ -391,7 +391,7 @@ export function App() {
           </div>
 
           <div className="email-list">
-          {loading ? (
+            {loading ? (
               <div className="empty-row">Loading emails...</div>
             ) : filteredEmails.length === 0 ? (
               <div className="empty-row">No {folder} emails yet.</div>
