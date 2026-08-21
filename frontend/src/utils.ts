@@ -4,6 +4,16 @@ export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string 
 export const USER_STORAGE_KEY = "reachinbox-user";
 export const AUTH_TOKEN_STORAGE_KEY = "reachinbox-google-token";
 
+export function readStoredSession(key: string): string | null {
+  const persistent = localStorage.getItem(key);
+  if (persistent) return persistent;
+
+  // Migrate users from the previous tab-only session storage behavior.
+  const legacy = sessionStorage.getItem(key);
+  if (legacy) localStorage.setItem(key, legacy);
+  return legacy;
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   return new Intl.DateTimeFormat("en", {
@@ -26,11 +36,15 @@ export function initials(value: string): string {
 }
 
 export function saveGoogleSession(user: object, token: string): void {
-  sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-  sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  sessionStorage.removeItem(USER_STORAGE_KEY);
+  sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 }
 
 export function clearGoogleSession(): void {
+  localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(USER_STORAGE_KEY);
   sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 }

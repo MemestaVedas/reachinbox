@@ -11,6 +11,7 @@ import {
   clearGoogleSession,
   formatFileSize,
   plainTextFromHtml,
+  readStoredSession,
   saveGoogleSession,
 } from "./utils";
 
@@ -36,18 +37,18 @@ const demoUser: UserProfile = {
 export function App() {
   // Restore session on first render
   const [screen, setScreen] = useState<Screen>(() =>
-    sessionStorage.getItem(USER_STORAGE_KEY) &&
-      sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+    readStoredSession(USER_STORAGE_KEY) &&
+      readStoredSession(AUTH_TOKEN_STORAGE_KEY)
       ? "home"
       : "login",
   );
   const [folder, setFolder] = useState<Folder>("scheduled");
   const [user, setUser] = useState<UserProfile>(() => {
-    const saved = sessionStorage.getItem(USER_STORAGE_KEY);
+    const saved = readStoredSession(USER_STORAGE_KEY);
     return saved ? (JSON.parse(saved) as UserProfile) : demoUser;
   });
   const [authToken, setAuthToken] = useState(
-    () => sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "",
+    () => readStoredSession(AUTH_TOKEN_STORAGE_KEY) ?? "",
   );
 
   // Email lists
