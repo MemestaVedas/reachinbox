@@ -427,8 +427,10 @@ export function App() {
 
       <main className="workspace">
         <header className="workspace-header">
-          <div className="mobile-brand">ONG</div>
-          <h1 className="header-section-title">{folder === "scheduled" ? "Scheduled" : "Sent"}<small>{visibleEmails.length}</small></h1>
+          <h1 className="header-section-title">
+            <span className="header-title-text">{folder === "scheduled" ? "Scheduled" : "Sent"}</span>
+            <small>{visibleEmails.length}</small>
+          </h1>
           <button className="header-icon" aria-label="Refresh" onClick={() => void loadEmails()}>
             ↻
           </button>

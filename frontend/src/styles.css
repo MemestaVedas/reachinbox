@@ -1454,12 +1454,25 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 }
 
 .theme-dark .header-section-title {
-  color: #ece9f6;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-dark .header-section-title .header-title-text {
+  background: linear-gradient(to right, #7579FF, #B482FF, #F8D7FF);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .theme-dark .header-section-title small {
   color: #c9c4dc;
   background: #303049;
+  font-size: 10px;
+  -webkit-text-fill-color: #c9c4dc;
 }
 
 .theme-dark .search-box, .theme-dark .editor, .theme-dark .editor-content {
