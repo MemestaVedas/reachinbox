@@ -454,39 +454,43 @@ export function App() {
             <div className="summary-card summary-next"><span><small>Next send</small><strong>{nextScheduled ? new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(nextScheduled.scheduledFor)) : "None queued"}</strong></span></div>
           </div>
 
-          <div className="list-heading">
+          <div className="dashboard-toolbar" aria-label="Mailbox controls">
             <div className="search-box">
               <Search size={16} />
               <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search recipient or subject" aria-label="Search emails" />
             </div>
+
+            <div className="dashboard-filters" aria-label="Email sorting and filters">
+              <label>
+                <span>Sort</span>
+                <select value={sortMode} onChange={(event) => setSortMode(event.target.value as typeof sortMode)}>
+                  <option value="date-desc">Newest first</option>
+                  <option value="date-asc">Oldest first</option>
+                  <option value="recipient">Recipient A–Z</option>
+                  <option value="subject">Subject A–Z</option>
+                  <option value="status">Status</option>
+                </select>
+              </label>
+              <label>
+                <span>Status</span>
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+                  <option value="all">All statuses</option>
+                  {folder === "scheduled" ? <><option value="pending">Pending</option><option value="processing">Processing</option></> : <><option value="sent">Sent</option><option value="failed">Failed</option></>}
+                </select>
+              </label>
+              <label>
+                <span>Date</span>
+                <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}>
+                  <option value="all">All dates</option>
+                  <option value="today">Today</option>
+                  <option value="next7">Next 7 days</option>
+                </select>
+              </label>
+            </div>
+
             <button className="compose-button" onClick={() => setScreen("compose")}>
               Compose
             </button>
-          </div>
-
-          <div className="dashboard-filters" aria-label="Email sorting and filters">
-            <label>Sort
-              <select value={sortMode} onChange={(event) => setSortMode(event.target.value as typeof sortMode)}>
-                <option value="date-desc">Newest first</option>
-                <option value="date-asc">Oldest first</option>
-                <option value="recipient">Recipient A–Z</option>
-                <option value="subject">Subject A–Z</option>
-                <option value="status">Status</option>
-              </select>
-            </label>
-            <label>Status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
-                <option value="all">All statuses</option>
-                {folder === "scheduled" ? <><option value="pending">Pending</option><option value="processing">Processing</option></> : <><option value="sent">Sent</option><option value="failed">Failed</option></>}
-              </select>
-            </label>
-            <label>Date
-              <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}>
-                <option value="all">All dates</option>
-                <option value="today">Today</option>
-                <option value="next7">Next 7 days</option>
-              </select>
-            </label>
           </div>
 
           <div className="email-list">
