@@ -15,6 +15,7 @@ model User {
   avatarUrl String?
   senders   Sender[]
   batches   EmailBatch[]
+  attachments EmailAttachment[]
   createdAt DateTime    @default(now())
 }
 
@@ -37,12 +38,29 @@ model EmailBatch {
   requestFingerprint String?
   subject         String
   body            String          @db.Text
+  bodyHtml        String?         @db.Text
   delayMs         Int
   hourlyLimit     Int
   startTime       DateTime
   totalRecipients Int
   createdAt       DateTime        @default(now())
   emails          ScheduledEmail[]
+  attachments     EmailAttachment[]
+}
+
+model EmailAttachment {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  batchId     String?
+  batch       EmailBatch? @relation(fields: [batchId], references: [id])
+  fileName    String
+  contentType String
+  sizeBytes   Int
+  data        Bytes
+  createdAt   DateTime    @default(now())
+
+  @@index([userId, batchId])
 }
 
 model ScheduledEmail {

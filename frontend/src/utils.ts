@@ -50,3 +50,13 @@ export function blankForm() {
     hourlyLimit: 200,
   };
 }
+
+export function plainTextFromHtml(value: string): string {
+  const document = new DOMParser().parseFromString(value, "text/html");
+  return (document.body.innerText || document.body.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.ceil(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}

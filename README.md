@@ -229,12 +229,14 @@ dist/assets/index-BG-Q6RZK.js   207.24 kB
 | Authentication | Google Identity Services obtains an ID token; the API verifies it before serving user data. |
 | Dashboard | Tailwind-powered React dashboard with scheduled and sent/failed lists, recipient, subject, time, status, loading, and empty states. |
 | Compose flow | Subject, body, manual recipient entry, CSV/TXT parsing, start time, delay, hourly limit, and sender selection post to the batch API. |
+| Rich-text email and attachments | The composer supports mail-safe text formatting and persistent image, video, audio, and file attachments. Each file is limited to 8 MB; attachments total 25 MB per scheduled batch. |
 
 ## Assumptions & Trade-offs
 
 - The default sender is created from the Ethereal environment values on first authenticated use. Additional sender records can use different Ethereal accounts and appear in the sender picker.
 - The BullMQ minimum-delay limiter is worker-wide. The hourly counter is per sender and remains safe when several workers share Redis.
 - Failed messages appear in the Sent tab with their scheduled time when no `sentAt` value exists.
+- Uploaded attachments are stored in PostgreSQL before scheduling, then linked atomically to the email batch. Restart the worker after pulling this version so it loads the attachment-aware sender.
 - `DEV_TEST_TOKEN` exists only for local test automation. The API accepts it only outside production and only when the environment explicitly supplies a non-empty value. Production always requires a verified Google ID token.
 
 ---

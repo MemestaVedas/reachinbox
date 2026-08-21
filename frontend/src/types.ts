@@ -8,7 +8,12 @@ export interface EmailRecord {
   scheduledFor: string;
   sentAt?: string | null;
   status: Status;
-  batch: { subject: string; body: string };
+  batch: {
+    subject: string;
+    body: string;
+    bodyHtml?: string | null;
+    attachments?: UploadedAttachment[];
+  };
   sender?: { etherealEmail: string };
 }
 
@@ -22,6 +27,13 @@ export interface UserProfile {
 export interface SenderOption {
   id: string;
   email: string;
+}
+
+export interface UploadedAttachment {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
 }
 
 export interface ComposeForm {

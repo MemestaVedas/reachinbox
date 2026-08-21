@@ -38,7 +38,7 @@ async function reserveHourlySlot(senderId: string, limit: number): Promise<boole
 async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 	const email = await prisma.scheduledEmail.findUnique({
 		where: { id: job.data.scheduledEmailId },
-		include: { sender: true, batch: true },
+		include: { sender: true, batch: { include: { attachments: true } } },
 	});
 
 	if (!email || email.status === "sent") {
@@ -81,6 +81,12 @@ async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 			to: email.recipient,
 			subject: email.batch.subject,
 			text: email.batch.body,
+			html: email.batch.bodyHtml ?? undefined,
+			attachments: email.batch.attachments.map((attachment) => ({
+				filename: attachment.fileName,
+				content: Buffer.from(attachment.data),
+				contentType: attachment.contentType,
+			})),
 		});
 
 		await prisma.scheduledEmail.update({

@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { LogOut, Search, X } from "lucide-react";
 
-import type { ComposeForm, EmailRecord, Folder, Screen, SenderOption, UserProfile } from "./types";
+import type { ComposeForm, EmailRecord, Folder, Screen, SenderOption, UploadedAttachment, UserProfile } from "./types";
 import {
   API_BASE,
   AUTH_TOKEN_STORAGE_KEY,
   USER_STORAGE_KEY,
   blankForm,
   clearGoogleSession,
+  formatFileSize,
+  plainTextFromHtml,
   saveGoogleSession,
 } from "./utils";
 
@@ -57,6 +59,8 @@ export function App() {
   const [recipients, setRecipients] = useState<string[]>([]);
   const [manualRecipient, setManualRecipient] = useState("");
   const [fileName, setFileName] = useState("");
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [showSendLater, setShowSendLater] = useState(false);
   const [senders, setSenders] = useState<SenderOption[]>([]);
   const [senderId, setSenderId] = useState("");
@@ -127,8 +131,9 @@ export function App() {
     if (!file) return;
     const text = await file.text();
     const emails = text.match(/[^\s,;]+@[^\s,;]+\.[^\s,;]+/gi) ?? [];
-    setRecipients([...new Set(emails.map((e) => e.toLowerCase()))]);
+    setRecipients((current) => [...new Set([...current, ...emails.map((email) => email.toLowerCase())])]);
     setFileName(file.name);
+    event.target.value = "";
   }
 
   function addManualRecipient() {
@@ -143,9 +148,68 @@ export function App() {
     setError("");
   }
 
+  async function uploadMedia(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+
+    const maxFileSize = 8 * 1024 * 1024;
+    const maxBatchSize = 25 * 1024 * 1024;
+    const oversized = files.find((file) => file.size > maxFileSize);
+    const nextTotal = attachments.reduce((total, attachment) => total + attachment.sizeBytes, 0)
+      + files.reduce((total, file) => total + file.size, 0);
+    if (oversized) {
+      setError(`${oversized.name} is ${formatFileSize(oversized.size)}. Each attachment must be 8 MB or smaller.`);
+      return;
+    }
+    if (nextTotal > maxBatchSize) {
+      setError("Attachments must total 25 MB or less for one email.");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    try {
+      const uploaded = await Promise.all(files.map(async (file) => {
+        const response = await fetch(`${API_BASE}/api/uploads`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/octet-stream",
+            "X-File-Name": encodeURIComponent(file.name),
+            "X-File-Type": file.type || "application/octet-stream",
+          },
+          body: file,
+        });
+        const payload = await response.json().catch(() => null) as { attachment?: UploadedAttachment; error?: string } | null;
+        if (!response.ok || !payload?.attachment) throw new Error(payload?.error ?? `Unable to upload ${file.name}`);
+        return payload.attachment;
+      }));
+      setAttachments((current) => [...current, ...uploaded]);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Unable to upload attachment.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function removeAttachment(attachment: UploadedAttachment) {
+    setAttachments((current) => current.filter((currentAttachment) => currentAttachment.id !== attachment.id));
+    try {
+      const response = await fetch(`${API_BASE}/api/uploads/${attachment.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok && response.status !== 404) throw new Error();
+    } catch {
+      setError(`Could not remove ${attachment.fileName} from storage. It will not be scheduled.`);
+    }
+  }
+
   async function scheduleEmail(event: FormEvent) {
     event.preventDefault();
-    if (!compose.subject.trim() || !compose.body.trim() || recipients.length === 0 || !senderId) {
+    const plainBody = plainTextFromHtml(compose.body);
+    if (!compose.subject.trim() || !plainBody || recipients.length === 0 || !senderId) {
       setError("Add a sender, subject, message, and at least one recipient first.");
       return;
     }
@@ -161,8 +225,10 @@ export function App() {
         },
         body: JSON.stringify({
           subject: compose.subject,
-          body: compose.body,
+          body: plainBody,
+          bodyHtml: compose.body,
           recipients,
+          attachmentIds: attachments.map((attachment) => attachment.id),
           senderId,
           startTime: new Date(compose.startTime).toISOString(),
           delayMs: compose.delaySeconds * 1000,
@@ -175,6 +241,7 @@ export function App() {
       setRecipients([]);
       setManualRecipient("");
       setFileName("");
+      setAttachments([]);
       setScreen("home");
       await loadEmails();
     } catch {
@@ -212,6 +279,10 @@ export function App() {
         senderId={senderId}
         setSenderId={setSenderId}
         readLeadFile={readLeadFile}
+        attachments={attachments}
+        uploadMedia={uploadMedia}
+        removeAttachment={removeAttachment}
+        uploading={uploading}
         onBack={() => setScreen("home")}
         onSubmit={scheduleEmail}
         saving={saving}

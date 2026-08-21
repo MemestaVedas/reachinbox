@@ -15,3 +15,40 @@
  .row-status { flex: 0 0 auto; padding: 3px 7px; border-radius: 10px; font-size: 9px; text-transform: capitalize; }
  .row-status-pending { color: #bd741e; background: #fff0df; }.row-status-processing { color: #327a9a; background: #e6f5fb; }.row-status-sent { color: #27804c; background: #e6f7ed; }.row-status-failed { color: #a84d43; background: #fff0ed; }
  .login-button:disabled { cursor: not-allowed; opacity: .5; }
+
+/* Compose editor and attachment controls */
+.compose-form { max-width: 780px; padding: 22px 0 42px; }
+.compose-fields { gap: 0; }
+.compose-fields > label, .from-field, .recipient-field { min-height: 42px; border-bottom: 1px solid #eef0f1; }
+.compose-fields > label, .from-field { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 0; }
+.compose-fields > label > span, .recipient-field > span { color: #303944; font-size: 10px; }
+.compose-fields > label > input { width: 100%; padding: 10px 0; border: 0; color: #47515d; }
+.sender-select-wrap { position: relative; display: inline-flex; width: fit-content; align-items: center; }
+.sender-select-wrap svg { position: absolute; right: 7px; pointer-events: none; color: #9aa4aa; }
+.from-pill { min-width: 167px; appearance: none; padding: 7px 25px 7px 10px; border: 0; color: #59636c; background: #f3f5f5; }
+.recipient-field { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 0; }
+.recipient-input-wrap { display: flex; min-width: 0; align-items: center; flex-wrap: wrap; gap: 4px; padding: 6px 0; }
+.recipient-input-wrap input { min-width: 130px; flex: 1; padding: 4px 0; border: 0; outline: 0; color: #46515b; font-size: 10px; }
+.recipient-input-wrap input::placeholder { color: #aeb5ba; }
+.recipient-chip { max-width: 165px; overflow: hidden; padding: 3px 8px; border: 1px solid #18ba61; border-radius: 12px; color: #167741; background: #effbf4; font-size: 9px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+.recipient-overflow { max-width: none; color: #126b3a; background: #e7f8ed; font-weight: 700; cursor: help; }
+.upload-list-button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 0 7px 17px; color: #0fa456; background: transparent; font-size: 10px; white-space: nowrap; }
+.compose-controls { padding: 11px 0 11px 48px; border-bottom: 1px solid #eef0f1; }
+.compose-controls label { gap: 8px; color: #3c4650; font-size: 9px; }
+.compose-controls input { width: 52px; height: 29px; }
+.editor { overflow: hidden; margin-top: 10px; border: 1px solid #f0f2f2; border-radius: 7px; background: #fafafa; }
+.editor-toolbar { display: flex; align-items: center; gap: 2px; min-height: 40px; padding: 5px 12px; border-bottom: 1px solid #eef0f1; background: #fff; overflow-x: auto; }
+.editor-toolbar button { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 4px; color: #7f898f; background: transparent; }
+.editor-toolbar button:hover { color: #148f50; background: #effaf3; }
+.toolbar-divider { width: 1px; height: 19px; flex: 0 0 1px; margin: 0 4px; background: #e2e6e7; }
+.toolbar-heading { font-size: 13px; font-weight: 600; letter-spacing: -1px; }
+.editor-content { min-height: 295px; padding: 16px; outline: 0; color: #3e4852; background: #fafafa; font-size: 12px; line-height: 1.65; }
+.editor-content:empty:before { content: attr(data-placeholder); color: #aab1b5; pointer-events: none; }
+.editor-content h2 { margin: 0 0 10px; font-size: 18px; }.editor-content p { margin: 0 0 9px; }.editor-content blockquote { margin: 10px 0; padding-left: 12px; border-left: 3px solid #2aba6a; color: #647079; }.editor-content a { color: #0c9d50; text-decoration: underline; }
+.attachment-zone { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 0 2px; color: #929ba0; font-size: 9px; }
+.media-upload-button { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid #dce5e0; border-radius: 5px; color: #138f4f; background: #fff; font-size: 10px; }.media-upload-button:hover { background: #f0faf4; }.media-upload-button:disabled { opacity: .6; cursor: wait; }
+.attachment-list { display: flex; width: 100%; flex-wrap: wrap; gap: 7px; padding-top: 3px; }
+.attachment-card { display: flex; max-width: 250px; align-items: center; gap: 7px; padding: 7px 8px; border: 1px solid #e5e9ea; border-radius: 5px; color: #648172; background: #fff; }.attachment-card > span { display: flex; min-width: 0; flex-direction: column; }.attachment-card strong { overflow: hidden; color: #46515a; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }.attachment-card small { color: #97a1a6; font-size: 8px; }.attachment-card button { display: grid; margin-left: 5px; padding: 2px; place-items: center; color: #a0a9ae; background: transparent; }.attachment-card button:hover { color: #bd4f45; }
+.lead-upload-status { display: flex; align-items: center; gap: 8px; padding: 11px 0; color: #879198; font-size: 10px; }.lead-upload-status small { color: #198d4e; }
+.rich-message-body h1, .rich-message-body h2, .rich-message-body h3 { line-height: 1.25; }.rich-message-body ul, .rich-message-body ol { padding-left: 24px; }.rich-message-body a { color: #0c9d50; }.message-attachments { display: flex; max-width: 660px; flex-wrap: wrap; gap: 8px; padding: 0 39px 28px; }.message-attachment { display: flex; min-width: 170px; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e5e9ea; border-radius: 5px; color: #688173; }.message-attachment span { display: flex; flex-direction: column; }.message-attachment strong { max-width: 180px; overflow: hidden; color: #47525c; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }.message-attachment small { color: #9ba5ac; font-size: 8px; }
+@media (max-width: 700px) { .compose-form { padding-bottom: 28px; }.recipient-field { grid-template-columns: 38px minmax(0, 1fr); }.recipient-field > .upload-list-button { grid-column: 2; justify-self: start; padding-left: 0; }.compose-fields > label, .from-field { grid-template-columns: 38px minmax(0, 1fr); }.compose-controls { padding-left: 38px; }.editor-content { min-height: 240px; }.editor-toolbar { padding-inline: 6px; }.attachment-zone { align-items: flex-start; }.lead-upload-status { align-items: flex-start; flex-wrap: wrap; }.lead-upload-status small { width: 100%; padding-left: 23px; } }
