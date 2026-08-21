@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Search, X } from "lucide-react";
+import { LogOut, Search, X } from "lucide-react";
 
-import type { ComposeForm, EmailRecord, Folder, Screen, UserProfile } from "./types";
+import type { ComposeForm, EmailRecord, Folder, Screen, SenderOption, UserProfile } from "./types";
 import {
   API_BASE,
   AUTH_TOKEN_STORAGE_KEY,
@@ -55,8 +55,12 @@ export function App() {
   // Compose form
   const [compose, setCompose] = useState<ComposeForm>(blankForm);
   const [recipients, setRecipients] = useState<string[]>([]);
+  const [manualRecipient, setManualRecipient] = useState("");
   const [fileName, setFileName] = useState("");
   const [showSendLater, setShowSendLater] = useState(false);
+  const [senders, setSenders] = useState<SenderOption[]>([]);
+  const [senderId, setSenderId] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -71,13 +75,17 @@ export function App() {
     setLoading(true);
     try {
       const headers: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-      const [scheduledRes, sentRes] = await Promise.all([
-        fetch(`${API_BASE}/api/emails?status=pending`, { headers }),
-        fetch(`${API_BASE}/api/emails?status=sent`, { headers }),
+      const [scheduledRes, sentRes, sendersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/emails?status=pending,processing`, { headers }),
+        fetch(`${API_BASE}/api/emails?status=sent,failed`, { headers }),
+        fetch(`${API_BASE}/api/senders`, { headers }),
       ]);
-      if (!scheduledRes.ok || !sentRes.ok) throw new Error("API unavailable");
+      if (!scheduledRes.ok || !sentRes.ok || !sendersRes.ok) throw new Error("API unavailable");
       setScheduled((await scheduledRes.json() as { emails: EmailRecord[] }).emails);
       setSent((await sentRes.json() as { emails: EmailRecord[] }).emails);
+      const loadedSenders = (await sendersRes.json() as { senders: SenderOption[] }).senders;
+      setSenders(loadedSenders);
+      setSenderId((current) => current || loadedSenders[0]?.id || "");
       setError("");
     } catch {
       setError("Preview data is shown while the API is offline.");
@@ -123,10 +131,22 @@ export function App() {
     setFileName(file.name);
   }
 
+  function addManualRecipient() {
+    const candidate = manualRecipient.trim().toLowerCase();
+    if (!candidate) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) {
+      setError("Enter a valid recipient email address.");
+      return;
+    }
+    setRecipients((current) => current.includes(candidate) ? current : [...current, candidate]);
+    setManualRecipient("");
+    setError("");
+  }
+
   async function scheduleEmail(event: FormEvent) {
     event.preventDefault();
-    if (!compose.subject.trim() || !compose.body.trim() || recipients.length === 0) {
-      setError("Add a subject, message, and lead file first.");
+    if (!compose.subject.trim() || !compose.body.trim() || recipients.length === 0 || !senderId) {
+      setError("Add a sender, subject, message, and at least one recipient first.");
       return;
     }
     setSaving(true);
@@ -143,6 +163,7 @@ export function App() {
           subject: compose.subject,
           body: compose.body,
           recipients,
+          senderId,
           startTime: new Date(compose.startTime).toISOString(),
           delayMs: compose.delaySeconds * 1000,
           hourlyLimit: compose.hourlyLimit,
@@ -152,6 +173,7 @@ export function App() {
       setMessage(`${recipients.length} emails scheduled successfully.`);
       setCompose(blankForm());
       setRecipients([]);
+      setManualRecipient("");
       setFileName("");
       setScreen("home");
       await loadEmails();
@@ -183,6 +205,12 @@ export function App() {
         setForm={setCompose}
         fileName={fileName}
         recipients={recipients}
+        manualRecipient={manualRecipient}
+        setManualRecipient={setManualRecipient}
+        addManualRecipient={addManualRecipient}
+        senders={senders}
+        senderId={senderId}
+        setSenderId={setSenderId}
         readLeadFile={readLeadFile}
         onBack={() => setScreen("home")}
         onSubmit={scheduleEmail}
@@ -201,11 +229,17 @@ export function App() {
   // Home — inbox list
   // -------------------------------------------------------------------------
   const emails = folder === "scheduled" ? scheduled : sent;
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredEmails = normalizedSearch
+    ? emails.filter((email) =>
+        email.recipient.toLowerCase().includes(normalizedSearch)
+        || email.batch.subject.toLowerCase().includes(normalizedSearch),
+      )
+    : emails;
 
   return (
     <div className="app">
       <Sidebar
-        user={user}
         folder={folder}
         scheduledCount={scheduled.length}
         sentCount={sent.length}
@@ -217,7 +251,6 @@ export function App() {
           setError("");
           setScreen("compose");
         }}
-        onLogout={logout}
       />
 
       <main className="workspace">
@@ -225,11 +258,29 @@ export function App() {
           <div className="mobile-brand">ONG</div>
           <div className="search-box">
             <Search size={16} />
-            <input placeholder="Search" />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search recipient or subject"
+              aria-label="Search emails"
+            />
           </div>
           <button className="header-icon" aria-label="Refresh" onClick={() => void loadEmails()}>
             ↻
           </button>
+          <div className="header-profile ml-auto flex items-center gap-2">
+            <span className="profile-avatar">
+              {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}
+            </span>
+            <span className="header-user-details">
+              <strong>{user.name}</strong>
+              <small>{user.email}</small>
+            </span>
+            <button className="header-logout" onClick={logout} aria-label="Log out">
+              <LogOut size={14} />
+              <span>Log out</span>
+            </button>
+          </div>
         </header>
 
         <section className="inbox-content">
@@ -257,12 +308,12 @@ export function App() {
           </div>
 
           <div className="email-list">
-            {loading ? (
+          {loading ? (
               <div className="empty-row">Loading emails...</div>
-            ) : emails.length === 0 ? (
+            ) : filteredEmails.length === 0 ? (
               <div className="empty-row">No {folder} emails yet.</div>
             ) : (
-              emails.map((email) => (
+              filteredEmails.map((email) => (
                 <EmailRow
                   key={email.id}
                   email={email}

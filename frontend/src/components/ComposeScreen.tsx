@@ -1,13 +1,19 @@
 import { useRef } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { ArrowLeft, ChevronDown, Clock3, Paperclip, Upload } from "lucide-react";
-import type { ComposeForm } from "../types";
+import { ArrowLeft, Clock3, Paperclip, Upload } from "lucide-react";
+import type { ComposeForm, SenderOption } from "../types";
 
 interface ComposeScreenProps {
   form: ComposeForm;
   setForm: (form: ComposeForm) => void;
   fileName: string;
   recipients: string[];
+  manualRecipient: string;
+  setManualRecipient: (recipient: string) => void;
+  addManualRecipient: () => void;
+  senders: SenderOption[];
+  senderId: string;
+  setSenderId: (senderId: string) => void;
   readLeadFile: (event: ChangeEvent<HTMLInputElement>) => void;
   onBack: () => void;
   onSubmit: (event: FormEvent) => void;
@@ -21,6 +27,12 @@ export function ComposeScreen({
   setForm,
   fileName,
   recipients,
+  manualRecipient,
+  setManualRecipient,
+  addManualRecipient,
+  senders,
+  senderId,
+  setSenderId,
   readLeadFile,
   onBack,
   onSubmit,
@@ -59,14 +71,33 @@ export function ComposeScreen({
 
       <form className="compose-form" onSubmit={onSubmit}>
         <div className="compose-fields">
-          <label>
-            From{" "}
-            <span className="from-pill">
-              oliver.brown@domain.io <ChevronDown size={14} />
-            </span>
+          <label className="flex items-center gap-8">
+            From
+            <select
+              aria-label="Sender"
+              className="from-pill border-0"
+              value={senderId}
+              onChange={(event) => setSenderId(event.target.value)}
+              disabled={senders.length === 0}
+            >
+              {senders.length === 0 ? <option>Loading senders...</option> : null}
+              {senders.map((sender) => <option key={sender.id} value={sender.id}>{sender.email}</option>)}
+            </select>
           </label>
           <label>
-            To <input placeholder="recipient@example.com" />
+            To
+            <input
+              value={manualRecipient}
+              onChange={(event) => setManualRecipient(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addManualRecipient();
+                }
+              }}
+              onBlur={addManualRecipient}
+              placeholder="recipient@example.com"
+            />
           </label>
           <label>
             Subject{" "}
@@ -115,7 +146,7 @@ export function ComposeScreen({
         <label className="lead-upload" onClick={() => fileRef.current?.click()}>
           <Upload size={16} />
           <span>{fileName || "Upload lead list (.csv or .txt)"}</span>
-          <small>
+          <small aria-live="polite">
             {recipients.length
               ? `${recipients.length} email addresses detected`
               : "Required for scheduling"}

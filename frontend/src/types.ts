@@ -19,6 +19,11 @@ export interface UserProfile {
   avatarUrl?: string | null;
 }
 
+export interface SenderOption {
+  id: string;
+  email: string;
+}
+
 export interface ComposeForm {
   subject: string;
   body: string;

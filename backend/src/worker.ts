@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Worker, type Job } from "bullmq";
+import { DelayedError, Worker, type Job } from "bullmq";
 import nodemailer from "nodemailer";
 import { prisma } from "./lib/db.js";
 import { redis } from "./lib/redis.js";
@@ -55,9 +55,14 @@ async function processEmail(job: Job<SendEmailJobData>): Promise<void> {
 	}
 
 	if (!(await reserveHourlySlot(email.senderId, email.batch.hourlyLimit))) {
-		await prisma.scheduledEmail.update({ where: { id: email.id }, data: { status: "pending" } });
-		await worker.rateLimit(nextHourDelayMs(new Date()));
-		throw Worker.RateLimitError();
+		const delayMs = nextHourDelayMs(new Date());
+		const scheduledFor = new Date(Date.now() + delayMs);
+		await prisma.scheduledEmail.update({
+			where: { id: email.id },
+			data: { status: "pending", scheduledFor },
+		});
+		await job.moveToDelayed(scheduledFor.getTime(), job.token);
+		throw new DelayedError("Hourly sender limit reached; rescheduled for the next UTC hour.");
 	}
 
 	try {

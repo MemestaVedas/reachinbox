@@ -1,6 +1,6 @@
 # ReachInbox Dispatch
 
-A full-stack email scheduling dashboard built around Express, Prisma, BullMQ, Redis, PostgreSQL, React, and Ethereal SMTP.
+A full-stack email scheduling dashboard built around Express, Prisma, BullMQ, Redis, PostgreSQL, React, Tailwind CSS, and Ethereal SMTP.
 
 ## Project Structure
 
@@ -9,13 +9,13 @@ reachinbox/
 ├── docker-compose.yml     # Infrastructure (PostgreSQL, Redis AOF)
 ├── backend/               # Express API, Worker, Prisma Schema, Tests
 │   ├── src/
-│   │   ├── api.ts         # REST Endpoints & Authentication
+│   │   ├── server.ts      # REST endpoints and authentication
 │   │   ├── worker.ts      # BullMQ Worker, Rate Limiter & SMTP Sender
 │   │   ├── queue.ts       # Queue definition & helpers
 │   │   ├── scheduling.ts  # Batch/recipient spacing & ingestion logic
-│   │   ├── db.ts          # Prisma Client setup
-│   │   └── redis.ts       # Redis client setup
-│   └── tests/             # Ingestion & scheduling integration tests
+│   │   ├── lib/db.ts      # Prisma Client setup
+│   │   └── lib/redis.ts   # Redis client setup
+│   └── src/scheduling.test.ts # Scheduling unit tests
 └── frontend/              # React Dashboard SPA
     ├── src/
     │   ├── types.ts       # Shared TypeScript types
@@ -85,7 +85,8 @@ docker compose up -d  # Run every time to start databases
    Open `backend/.env` and supply:
    - `DATABASE_URL` (if different from default docker setup)
    - `GOOGLE_CLIENT_ID`
-   - `SMTP_USER` and `SMTP_PASS` (from your Ethereal account)
+   - `ETHEREAL_EMAIL` and `ETHEREAL_PASSWORD` (from your Ethereal account)
+   - Optional local-test value: `DEV_TEST_TOKEN`. This token works only while `NODE_ENV` is not `production`.
 
 5. Generate the Prisma Client and migrate the database:
    ```powershell
@@ -211,6 +212,30 @@ dist/assets/index-BG-Q6RZK.js   207.24 kB
 - **Rate-Limiting (Atomic Redis Counter)**:
   - Tracks sending velocity per-sender using atomic increments (`INCR`/`EXPIRE`) on `ratelimit:<senderId>:<hour>` keys.
   - When the hourly cap is hit, jobs are delayed and rescheduled to the next UTC hour rather than dropped or failed.
+- **Concurrency and Send Delay**:
+  - `WORKER_CONCURRENCY` controls concurrent worker execution; it defaults to `5`.
+  - BullMQ enforces one completed send every `MIN_DELAY_MS` milliseconds across this worker; it defaults to `2,000` ms.
+- **Multiple Senders**:
+  - Each scheduled row owns a `senderId`. The dashboard obtains the authenticated user's sender options from `GET /api/senders` and includes the selected ID when creating a batch.
+
+## Features Implemented
+
+| Requirement | Implementation |
+| --- | --- |
+| Persistent scheduler without cron | BullMQ delayed jobs in Redis AOF, backed by PostgreSQL records and reconciliation on startup. |
+| Restart recovery and idempotency | Pending/processing rows reconcile on boot; stable BullMQ job IDs and `Idempotency-Key` prevent duplicate queueing. |
+| Throughput controls | Configurable worker concurrency, a BullMQ minimum-delay limiter, and atomic per-sender Redis hourly counters. |
+| Multiple senders | Sender records belong to users; the API validates an owned `senderId` and the compose screen lets users select one. |
+| Authentication | Google Identity Services obtains an ID token; the API verifies it before serving user data. |
+| Dashboard | Tailwind-powered React dashboard with scheduled and sent/failed lists, recipient, subject, time, status, loading, and empty states. |
+| Compose flow | Subject, body, manual recipient entry, CSV/TXT parsing, start time, delay, hourly limit, and sender selection post to the batch API. |
+
+## Assumptions & Trade-offs
+
+- The default sender is created from the Ethereal environment values on first authenticated use. Additional sender records can use different Ethereal accounts and appear in the sender picker.
+- The BullMQ minimum-delay limiter is worker-wide. The hourly counter is per sender and remains safe when several workers share Redis.
+- Failed messages appear in the Sent tab with their scheduled time when no `sentAt` value exists.
+- `DEV_TEST_TOKEN` exists only for local test automation. The API accepts it only outside production and only when the environment explicitly supplies a non-empty value. Production always requires a verified Google ID token.
 
 ---
 

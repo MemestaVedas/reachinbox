@@ -31,6 +31,7 @@ interface CreateBatchBody {
   startTime?: string;
   delayMs?: number;
   hourlyLimit?: number;
+  senderId?: string;
 }
 
 function normalizedRecipients(value: unknown): string[] {
@@ -46,7 +47,7 @@ function normalizedRecipients(value: unknown): string[] {
   return [...new Set(recipients)];
 }
 
-async function senderForUser(userId?: string) {
+async function senderForUser(userId?: string, requestedSenderId?: string) {
   const user = userId
     ? await prisma.user.findUnique({ where: { id: userId } })
     : await prisma.user.upsert({
@@ -61,6 +62,16 @@ async function senderForUser(userId?: string) {
 
   if (!user) {
     throw new Error("Authenticated user was not found");
+  }
+
+  if (requestedSenderId) {
+    const requestedSender = await prisma.sender.findFirst({
+      where: { id: requestedSenderId, userId: user.id },
+    });
+    if (!requestedSender) {
+      throw new Error("The selected sender is unavailable");
+    }
+    return requestedSender;
   }
 
   const existingSender = await prisma.sender.findFirst({ where: { userId: user.id } });
@@ -97,6 +108,24 @@ async function reconcilePendingJobs(): Promise<void> {
 async function authenticatedUser(request: express.Request, response: express.Response) {
   const authorization = request.header("Authorization");
   const audience = process.env.GOOGLE_CLIENT_ID;
+
+  // Local test support only. This route never accepts the token in production,
+  // and it remains disabled unless a token is explicitly configured.
+  if (
+    process.env.NODE_ENV !== "production"
+    && process.env.DEV_TEST_TOKEN
+    && authorization === `Bearer ${process.env.DEV_TEST_TOKEN}`
+  ) {
+    return prisma.user.upsert({
+      where: { googleId: "development-test-user" },
+      update: {},
+      create: {
+        googleId: "development-test-user",
+        name: "Development Test User",
+        email: "dev-test@reachinbox.local",
+      },
+    });
+  }
 
   if (!audience || !authorization?.startsWith("Bearer ")) {
     response.status(401).json({ error: "Google authentication is required" });
@@ -191,7 +220,7 @@ app.post("/api/batches", async (request, response) => {
       return;
     }
 
-    const sender = await senderForUser(user.id);
+    const sender = await senderForUser(user.id, body.senderId);
     const scheduledRecipients = scheduleRecipients(recipients, startTime, delayMs, hourlyLimit);
     const batchId = randomUUID();
     const rows = scheduledRecipients.map(({ recipient, scheduledFor }) => ({
@@ -250,14 +279,31 @@ app.post("/api/batches", async (request, response) => {
   }
 });
 
+app.get("/api/senders", async (request, response) => {
+  const user = await authenticatedUser(request, response);
+  if (!user) return;
+
+  await senderForUser(user.id);
+  const senders = await prisma.sender.findMany({
+    where: { userId: user.id },
+    select: { id: true, etherealEmail: true },
+    orderBy: { etherealEmail: "asc" },
+  });
+
+  response.json({ senders: senders.map((sender) => ({ id: sender.id, email: sender.etherealEmail })) });
+});
+
 app.get("/api/emails", async (request, response) => {
   const user = await authenticatedUser(request, response);
   if (!user) return;
-  const status = request.query.status;
+  const requestedStatuses = typeof request.query.status === "string"
+    ? request.query.status.split(",")
+    : [];
   const allowedStatuses = ["pending", "processing", "sent", "failed"] as const;
-  const filter = allowedStatuses.includes(status as (typeof allowedStatuses)[number])
-    ? { status: status as (typeof allowedStatuses)[number] }
-    : {};
+  const statuses = requestedStatuses.filter((status): status is (typeof allowedStatuses)[number] =>
+    allowedStatuses.includes(status as (typeof allowedStatuses)[number]),
+  );
+  const filter = statuses.length > 0 ? { status: { in: statuses } } : {};
 
   const emails = await prisma.scheduledEmail.findMany({
     where: { ...filter, batch: { userId: user.id } },

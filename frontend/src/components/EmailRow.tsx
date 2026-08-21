@@ -17,6 +17,10 @@ export function EmailRow({ email, folder, onOpen }: EmailRowProps) {
         <span className="date-pill">◷ {formatDate(email.scheduledFor)}</span>
       )}
 
+      {folder === "sent" && (
+        <span className="date-pill">✓ {formatDate(email.sentAt ?? email.scheduledFor)}</span>
+      )}
+
       <strong>{email.batch.subject}</strong>
       <span className="preview">- {email.batch.body || "No message preview"}</span>
 
