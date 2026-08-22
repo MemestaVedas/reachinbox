@@ -659,9 +659,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   border-radius: 6px;
   font-size: 10px;
 }
-.login-card-plain { padding: 0; background: transparent; box-shadow: none; }
-.login-card-glow { width: max-content; }
-.theme-dark .login-card-glow .login-card { border-color: transparent; }
 
 .login-button:disabled {
   cursor: not-allowed;
