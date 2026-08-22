@@ -41,6 +41,17 @@ interface CreateBatchBody {
   allowIncomplete?: boolean;
 }
 
+interface CreateSenderBody {
+  email?: unknown;
+  password?: unknown;
+  host?: unknown;
+  port?: unknown;
+  etherealEmail?: unknown;
+  etherealPass?: unknown;
+  etherealHost?: unknown;
+  etherealPort?: unknown;
+}
+
 function safeFileName(value: string | undefined): string {
   if (!value) return "attachment";
   try {
@@ -462,6 +473,53 @@ app.get("/api/senders", async (request, response) => {
   });
 
   response.json({ senders: senders.map((sender) => ({ id: sender.id, email: sender.etherealEmail })) });
+});
+
+app.post("/api/senders", async (request, response) => {
+  try {
+    const user = await authenticatedUser(request, response);
+    if (!user) return;
+
+    const body = (request.body ?? {}) as CreateSenderBody;
+    const emailValue = body.email ?? body.etherealEmail;
+    const passwordValue = body.password ?? body.etherealPass;
+    const hostValue = body.host ?? body.etherealHost ?? process.env.ETHEREAL_HOST ?? "smtp.ethereal.email";
+    const portValue = body.port ?? body.etherealPort ?? process.env.ETHEREAL_PORT ?? 587;
+    const email = typeof emailValue === "string" ? emailValue.trim().toLowerCase() : "";
+    const password = typeof passwordValue === "string" ? passwordValue : "";
+    const host = typeof hostValue === "string" ? hostValue.trim() : "";
+    const port = Number(portValue);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
+      response.status(400).json({ error: "A valid email, password, host, and port are required" });
+      return;
+    }
+
+    const existingSender = await prisma.sender.findFirst({
+      where: { userId: user.id, etherealEmail: email },
+      select: { id: true },
+    });
+    if (existingSender) {
+      response.status(409).json({ error: "A sender with this email already exists" });
+      return;
+    }
+
+    const sender = await prisma.sender.create({
+      data: {
+        userId: user.id,
+        etherealEmail: email,
+        etherealPass: password,
+        etherealHost: host,
+        etherealPort: port,
+      },
+      select: { id: true, etherealEmail: true },
+    });
+
+    response.status(201).json({ sender: { id: sender.id, email: sender.etherealEmail } });
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ error: "Unable to create sender" });
+  }
 });
 
 app.get("/api/notifications", async (request, response) => {

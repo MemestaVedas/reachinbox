@@ -173,7 +173,7 @@ To verify typescript safety, build correctness, and run the test suite:
 ```powershell
 cd backend
 npm run build        # Compiles TypeScript (verification/production)
-npm test             # Runs integration tests (including 1000-recipient burst tests)
+npm test             # Runs scheduling unit tests (including 1000-recipient burst tests)
 npx prisma validate  # Checks schema validity
 ```
 *Expected Output on Success (`npm test`):*
@@ -216,7 +216,7 @@ dist/assets/index-BG-Q6RZK.js   207.24 kB
   - `WORKER_CONCURRENCY` controls concurrent worker execution; it defaults to `5`.
   - BullMQ enforces one completed send every `MIN_DELAY_MS` milliseconds across this worker; it defaults to `2,000` ms.
 - **Multiple Senders**:
-  - Each scheduled row owns a `senderId`. The dashboard obtains the authenticated user's sender options from `GET /api/senders` and includes the selected ID when creating a batch.
+  - Each scheduled row owns a `senderId`. Authenticated users can create sender credentials with `POST /api/senders`; the dashboard obtains the user's sender options from `GET /api/senders` and includes the selected ID when creating a batch.
 
 ## Features Implemented
 
