@@ -77,23 +77,10 @@ export function LoginScreen({ onLogin, onGoogleUser, onError, error, darkMode, o
         )}
 
         <div className="or-divider">
-          <span>Google sign-in is required</span>
+          <span>Google sign in only</span>
         </div>
 
-        <label>
-          Email ID
-          <input type="email" placeholder="Email ID" disabled />
-        </label>
-        <label>
-          Password
-          <input type="password" placeholder="Password" disabled />
-        </label>
-
         {error && <p className="form-error">{error}</p>}
-
-        <button className="login-button" disabled={!GOOGLE_CLIENT_ID}>
-          Login with Google
-        </button>
       </form>
     </div>
   );
