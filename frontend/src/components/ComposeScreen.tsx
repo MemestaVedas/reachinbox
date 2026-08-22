@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, MouseEvent } from "react";
 import {
   AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, ChevronDown, Clock3,
-  FileText, Image, IndentDecrease, IndentIncrease, Italic, Link2, List,
+  CalendarDays, FileText, Image, IndentDecrease, IndentIncrease, Italic, Link2, List,
   ListOrdered, Paperclip, Quote, Redo2, Underline, Undo2, Upload, Video,
   Volume2, X,
 } from "lucide-react";
@@ -87,6 +87,12 @@ export function ComposeScreen({
 
   const visibleRecipients = showAllRecipients ? recipients : recipients.slice(0, visibleRecipientCount);
   const overflowCount = recipients.length - visibleRecipients.length;
+  const suggestedTimes = [10, 11, 15].map((hour) => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    date.setHours(hour, 0, 0, 0);
+    return { label: `Tomorrow, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`, value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00` };
+  });
 
   return (
     <div className="compose-page">
@@ -179,7 +185,7 @@ export function ComposeScreen({
         <input ref={leadFileRef} type="file" accept=".csv,.txt,text/csv,text/plain" onChange={readLeadFile} hidden />
         <input ref={mediaFileRef} type="file" multiple onChange={uploadMedia} hidden />
 
-        {showSendLater && <div className="send-later"><strong>Send Later</strong><label>Pick date &amp; time<input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /><span>Timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone} (Local)</span></label><button type="button" onClick={() => setShowSendLater(false)}>Done</button></div>}
+        {showSendLater && <div className="send-later" role="dialog" aria-label="Schedule send"><strong>Send Later</strong><label className="send-later-picker"><span>Pick date &amp; time <CalendarDays size={18} /></span><input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label><div className="send-later-suggestions">{suggestedTimes.map((suggestion) => <button type="button" key={suggestion.value} onClick={() => setForm({ ...form, startTime: suggestion.value })}>{suggestion.label}</button>)}</div><div className="send-later-actions"><button type="button" className="send-later-cancel" onClick={() => setShowSendLater(false)}>Cancel</button><button type="button" onClick={() => setShowSendLater(false)}>Done</button></div></div>}
         <button className="mobile-send" disabled={saving || uploading}>{saving ? "Scheduling..." : "Schedule emails"}</button>
       </form>
     </div>

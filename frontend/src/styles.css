@@ -1920,3 +1920,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .sidebar-section-label { display: block; padding: 0 9px 7px; color: #b2babf; font-size: 8px; letter-spacing: .04em; }
 .theme-dark .sidebar-account-menu { border-color: #30314b; background: #17182a; }.theme-dark .sidebar-account-menu strong { color: #eeeafa; }.theme-dark .sidebar-account-menu small, .theme-dark .sidebar-section-label { color: #9995ab; }
 .login-theme-toggle { position: fixed; right: auto; bottom: 24px; left: 24px; z-index: 5; }
+.send-later { width: 390px; padding: 25px 27px; border-radius: 12px; box-shadow: 0 14px 35px #25303b26; }
+.send-later strong { margin-bottom: 28px; color: #202b38; font-size: 22px; }
+.send-later-picker { position: relative; gap: 0; padding-bottom: 9px; border-bottom: 1px solid #e3e7e9; color: #8e969e !important; font-size: 14px !important; }
+.send-later-picker > span { display: flex; align-items: center; justify-content: space-between; }.send-later-picker svg { color: #9aa7b8; }
+.send-later-picker input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.send-later-suggestions { display: flex; flex-direction: column; gap: 3px; margin-top: 21px; }.send-later-suggestions button { margin: 0; padding: 7px 0; border: 0; color: #566476; background: transparent; font-size: 14px; text-align: left; }.send-later-suggestions button:hover { color: #149b55; }
+.send-later-actions { display: flex; align-items: center; justify-content: flex-end; gap: 28px; margin-top: 35px; }.send-later-actions button { float: none; margin: 0; padding: 9px 30px; font-size: 13px; }.send-later-actions .send-later-cancel { padding: 9px 0; border: 0; color: #1f252b; }
+.theme-dark .send-later { border-color: #30314b; background: #17182a; }.theme-dark .send-later strong { color: #eeeafa; }.theme-dark .send-later-picker { border-color: #34354c; color: #a6a6b8 !important; }.theme-dark .send-later-suggestions button { color: #c1bdd0; }.theme-dark .send-later-actions .send-later-cancel { color: #eeeafa; }
