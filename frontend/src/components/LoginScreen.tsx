@@ -3,6 +3,7 @@ import { Moon, Sun } from "lucide-react";
 import type { FormEvent } from "react";
 import type { UserProfile } from "../types";
 import { API_BASE, GOOGLE_CLIENT_ID } from "../utils";
+import { BorderGlow } from "./BorderGlow";
 
 interface LoginScreenProps {
   onLogin: (event: FormEvent) => void;
@@ -65,7 +66,8 @@ export function LoginScreen({ onLogin, onGoogleUser, onError, error, darkMode, o
       <button type="button" className="theme-toggle login-theme-toggle" aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme}>
         {darkMode ? <Sun size={16} /> : <Moon size={16} />}
       </button>
-      <form className="login-card" onSubmit={onLogin}>
+        <BorderGlow className={darkMode ? "login-card-glow" : "login-card-plain"}>
+        <form className="login-card" onSubmit={onLogin}>
         <h1>Login</h1>
 
         {GOOGLE_CLIENT_ID ? (
@@ -94,7 +96,8 @@ export function LoginScreen({ onLogin, onGoogleUser, onError, error, darkMode, o
         <button className="login-button" disabled={!GOOGLE_CLIENT_ID}>
           Google sign in only
         </button>
-      </form>
+        </form>
+        </BorderGlow>
     </div>
   );
 }
