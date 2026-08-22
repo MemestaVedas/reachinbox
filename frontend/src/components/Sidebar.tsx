@@ -1,4 +1,5 @@
-import { Clock3, LogOut, Moon, Send, Sun } from "lucide-react";
+import { ChevronDown, Clock3, LogOut, Moon, Send, Sun } from "lucide-react";
+import { useState } from "react";
 import type { Folder } from "../types";
 
 interface SidebarProps {
@@ -21,16 +22,22 @@ export function Sidebar({
   setFolder,
   onCompose, darkMode, onToggleTheme, onLogout,
 }: SidebarProps) {
+  const [accountOpen, setAccountOpen] = useState(false);
+
   return (
     <aside className="sidebar-light">
-      <div className="logo">ONG</div>
-      <div className="sidebar-account">
+      <div className="logo">ONB</div>
+      <button type="button" className="sidebar-account" aria-expanded={accountOpen} onClick={() => setAccountOpen((current) => !current)}>
         <span className="profile-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.name.slice(0, 2).toUpperCase()}</span>
         <span><strong>{user.name}</strong><small>{user.email}</small></span>
-      </div>
+        <ChevronDown className="sidebar-account-chevron" size={17} />
+      </button>
+      {accountOpen ? <div className="sidebar-account-menu"><strong>{user.name}</strong><small>{user.email}</small></div> : null}
       <button className="outline-compose" onClick={onCompose}>
         Compose
       </button>
+
+      <span className="sidebar-section-label">CORE</span>
 
       <button
         className={`side-link ${folder === "scheduled" ? "selected" : ""}`}
