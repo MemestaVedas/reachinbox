@@ -93,6 +93,9 @@ export function ComposeScreen({
     date.setHours(hour, 0, 0, 0);
     return { label: `Tomorrow, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`, value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00` };
   });
+  const selectedDateLabel = form.startTime
+    ? new Date(form.startTime).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "Pick date & time";
 
   return (
     <div className="compose-page">
@@ -185,7 +188,7 @@ export function ComposeScreen({
         <input ref={leadFileRef} type="file" accept=".csv,.txt,text/csv,text/plain" onChange={readLeadFile} hidden />
         <input ref={mediaFileRef} type="file" multiple onChange={uploadMedia} hidden />
 
-        {showSendLater && <div className="send-later" role="dialog" aria-label="Schedule send"><strong>Send Later</strong><label className="send-later-picker"><span>Pick date &amp; time <CalendarDays size={18} /></span><input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label><div className="send-later-suggestions">{suggestedTimes.map((suggestion) => <button type="button" key={suggestion.value} onClick={() => setForm({ ...form, startTime: suggestion.value })}>{suggestion.label}</button>)}</div><div className="send-later-actions"><button type="button" className="send-later-cancel" onClick={() => setShowSendLater(false)}>Cancel</button><button type="button" onClick={() => setShowSendLater(false)}>Done</button></div></div>}
+        {showSendLater && <div className="send-later" role="dialog" aria-label="Schedule send"><strong>Send Later</strong><label className={`send-later-picker ${form.startTime ? "has-selection" : ""}`}><span>{form.startTime ? `Selected: ${selectedDateLabel}` : "Pick date & time"} <CalendarDays size={18} /></span><input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label><div className="send-later-suggestions">{suggestedTimes.map((suggestion) => <button type="button" key={suggestion.value} onClick={() => setForm({ ...form, startTime: suggestion.value })}>{suggestion.label}</button>)}</div><div className="send-later-actions"><button type="button" className="send-later-cancel" onClick={() => setShowSendLater(false)}>Cancel</button><button type="button" onClick={() => setShowSendLater(false)}>Done</button></div></div>}
         <button className="mobile-send" disabled={saving || uploading}>{saving ? "Scheduling..." : "Schedule emails"}</button>
       </form>
     </div>

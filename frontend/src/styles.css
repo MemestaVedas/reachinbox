@@ -1924,6 +1924,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .send-later strong { margin-bottom: 28px; color: #202b38; font-size: 22px; }
 .send-later-picker { position: relative; gap: 0; padding-bottom: 9px; border-bottom: 1px solid #e3e7e9; color: #8e969e !important; font-size: 14px !important; }
 .send-later-picker > span { display: flex; align-items: center; justify-content: space-between; }.send-later-picker svg { color: #9aa7b8; }
+.send-later-picker.has-selection > span { color: #4e5f70; font-weight: 600; }.theme-dark .send-later-picker.has-selection > span { color: #e1ddef; }
 .send-later-picker input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .send-later-suggestions { display: flex; flex-direction: column; gap: 3px; margin-top: 21px; }.send-later-suggestions button { margin: 0; padding: 7px 0; border: 0; color: #566476; background: transparent; font-size: 14px; text-align: left; }.send-later-suggestions button:hover { color: #149b55; }
 .send-later-actions { display: flex; align-items: center; justify-content: flex-end; gap: 28px; margin-top: 35px; }.send-later-actions button { float: none; margin: 0; padding: 9px 30px; font-size: 13px; }.send-later-actions .send-later-cancel { padding: 9px 0; border: 0; color: #1f252b; }
